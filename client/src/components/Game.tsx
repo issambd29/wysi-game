@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, Star } from "lucide-react";
+import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, Star, Wind, Flame, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -36,31 +36,30 @@ interface ScorePopup {
   color: string;
 }
 
+interface HitParticle {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+}
+
 interface GameProps {
   onExit: () => void;
   nickname: string;
 }
 
-const GARBAGE_CONFIG: Record<string, { icon: typeof Trash2; label: string; iconColor: string; color: string; toxicColor: string }> = {
-  bottle: { icon: FlaskRound, label: "Plastic", iconColor: "text-sky-300", color: "bg-sky-800/50 border-sky-500/40", toxicColor: "bg-red-900/50 border-red-500/50" },
-  bag: { icon: ShoppingBag, label: "Bag", iconColor: "text-amber-300", color: "bg-amber-800/50 border-amber-500/40", toxicColor: "bg-red-900/50 border-red-500/50" },
-  can: { icon: Package, label: "Can", iconColor: "text-zinc-300", color: "bg-zinc-700/50 border-zinc-400/40", toxicColor: "bg-red-900/50 border-red-500/50" },
-  barrel: { icon: Trash2, label: "Toxic", iconColor: "text-orange-300", color: "bg-orange-800/50 border-orange-500/40", toxicColor: "bg-red-900/60 border-red-400/60" },
-  oil: { icon: Droplets, label: "Oil", iconColor: "text-violet-300", color: "bg-violet-800/50 border-violet-500/40", toxicColor: "bg-red-900/50 border-red-500/50" },
-  ewaste: { icon: Cpu, label: "E-waste", iconColor: "text-teal-300", color: "bg-teal-800/50 border-teal-500/40", toxicColor: "bg-red-900/50 border-red-500/50" },
+const GARBAGE_CONFIG: Record<string, { icon: typeof Trash2; label: string; iconColor: string; bgGlow: string; color: string; toxicColor: string }> = {
+  bottle: { icon: FlaskRound, label: "Plastic", iconColor: "text-sky-200", bgGlow: "shadow-sky-500/20", color: "bg-sky-950/60 border-sky-400/30", toxicColor: "bg-red-950/70 border-red-400/40" },
+  bag: { icon: ShoppingBag, label: "Bag", iconColor: "text-amber-200", bgGlow: "shadow-amber-500/20", color: "bg-amber-950/60 border-amber-400/30", toxicColor: "bg-red-950/70 border-red-400/40" },
+  can: { icon: Package, label: "Can", iconColor: "text-zinc-200", bgGlow: "shadow-zinc-400/20", color: "bg-zinc-800/60 border-zinc-400/30", toxicColor: "bg-red-950/70 border-red-400/40" },
+  barrel: { icon: Trash2, label: "Toxic", iconColor: "text-orange-200", bgGlow: "shadow-orange-500/20", color: "bg-orange-950/60 border-orange-400/30", toxicColor: "bg-red-950/70 border-red-400/40" },
+  oil: { icon: Droplets, label: "Oil", iconColor: "text-violet-200", bgGlow: "shadow-violet-500/20", color: "bg-violet-950/60 border-violet-400/30", toxicColor: "bg-red-950/70 border-red-400/40" },
+  ewaste: { icon: Cpu, label: "E-waste", iconColor: "text-teal-200", bgGlow: "shadow-teal-500/20", color: "bg-teal-950/60 border-teal-400/30", toxicColor: "bg-red-950/70 border-red-400/40" },
 };
 
 const LEVEL_NAMES = [
-  "Seedling",
-  "Sapling",
-  "Young Oak",
-  "Forest Warden",
-  "Grove Keeper",
-  "Ancient Guardian",
-  "Spirit of the Wild",
-  "Primordial Force",
-  "World Tree",
-  "Gaia's Chosen",
+  "Seedling", "Sapling", "Young Oak", "Forest Warden", "Grove Keeper",
+  "Ancient Guardian", "Spirit of the Wild", "Primordial Force", "World Tree", "Gaia's Chosen",
 ];
 
 const LEVEL_THRESHOLDS = [0, 300, 750, 1500, 2500, 4000, 6000, 8500, 12000, 16000];
@@ -86,8 +85,10 @@ export function Game({ onExit, nickname }: GameProps) {
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
   const [scorePopups, setScorePopups] = useState<ScorePopup[]>([]);
+  const [hitParticles, setHitParticles] = useState<HitParticle[]>([]);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [bgOffset, setBgOffset] = useState(0);
+  const [screenShake, setScreenShake] = useState(0);
 
   const gameLoopRef = useRef<number>();
   const lastShotRef = useRef<number>(0);
@@ -104,6 +105,7 @@ export function Game({ onExit, nickname }: GameProps) {
   const activePowerUpRef = useRef<string | null>(null);
   const comboRef = useRef(0);
   const popupIdRef = useRef(0);
+  const particleIdRef = useRef(0);
 
   const PLAYER_Y = 85;
   const SHOT_SPEED = 2;
@@ -125,6 +127,17 @@ export function Game({ onExit, nickname }: GameProps) {
     const id = ++popupIdRef.current;
     setScorePopups(prev => [...prev.slice(-8), { id, x, y, text, color }]);
     setTimeout(() => setScorePopups(prev => prev.filter(p => p.id !== id)), 1200);
+  }, []);
+
+  const addHitParticle = useCallback((x: number, y: number, color: string) => {
+    const id = ++particleIdRef.current;
+    setHitParticles(prev => [...prev.slice(-6), { id, x, y, color }]);
+    setTimeout(() => setHitParticles(prev => prev.filter(p => p.id !== id)), 600);
+  }, []);
+
+  const triggerShake = useCallback(() => {
+    setScreenShake(3);
+    setTimeout(() => setScreenShake(0), 150);
   }, []);
 
   const incrementCombo = useCallback(() => {
@@ -259,11 +272,13 @@ export function Game({ onExit, nickname }: GameProps) {
               setScore(s => s + pts);
               hDelta += 3;
               incrementCombo();
-              addPopup(p.x, CONTAINER_Y - 5, `+${pts}`, "text-primary");
+              addPopup(p.x, CONTAINER_Y - 5, `+${pts}`, "text-emerald-300");
+              addHitParticle(p.x, CONTAINER_Y - 3, "bg-emerald-400");
             } else {
               if (activePowerUpRef.current !== "shield") {
                 const dmg = p.isToxic ? 15 : 5;
                 hDelta -= dmg;
+                triggerShake();
               }
               setCombo(0);
             }
@@ -304,7 +319,8 @@ export function Game({ onExit, nickname }: GameProps) {
               setHealth(h => Math.min(100, h + 1));
               setDestroyed(d => d + 1);
               incrementCombo();
-              addPopup(hitPol.x, hitPol.y, `+${pts}`, "text-accent");
+              addPopup(hitPol.x, hitPol.y, `+${pts}`, "text-amber-300");
+              addHitParticle(hitPol.x, hitPol.y, "bg-amber-400");
               nextPol.splice(hitIdx, 1);
             }
           }
@@ -321,13 +337,13 @@ export function Game({ onExit, nickname }: GameProps) {
             setScore(s => s + 100);
             setHealth(h => Math.min(100, h + 20));
             setShowSeedBurst(true);
-            addPopup(50, 50, "+100 SEED BURST", "text-primary");
+            addPopup(50, 50, "+100 SEED BURST", "text-emerald-300");
             setTimeout(() => setShowSeedBurst(false), 1000);
           } else {
             setActivePowerUp(found.type);
             activePowerUpRef.current = found.type;
             setPowerUpTimer(10);
-            addPopup(found.x, found.y, found.type.toUpperCase(), "text-accent");
+            addPopup(found.x, found.y, found.type.toUpperCase(), "text-amber-300");
           }
           return prev.filter(p => p.id !== found.id);
         }
@@ -356,7 +372,7 @@ export function Game({ onExit, nickname }: GameProps) {
     return () => {
       if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
     };
-  }, [addPopup, incrementCombo, getComboMultiplier]);
+  }, [addPopup, addHitParticle, incrementCombo, getComboMultiplier, triggerShake]);
 
   useEffect(() => {
     if (paused || gameOver) return;
@@ -391,7 +407,9 @@ export function Game({ onExit, nickname }: GameProps) {
     setCombo(0);
     setMaxCombo(0);
     setScorePopups([]);
+    setHitParticles([]);
     setPowerUpTimer(0);
+    setScreenShake(0);
     scoreRef.current = 0;
     levelRef.current = 1;
     healthRef.current = 100;
@@ -413,225 +431,234 @@ export function Game({ onExit, nickname }: GameProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-4 overflow-hidden"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
+      style={{ background: 'radial-gradient(ellipse at 50% 30%, hsl(150, 30%, 6%) 0%, hsl(160, 20%, 3%) 60%, #000 100%)' }}
     >
-      {/* HUD */}
-      <div className="absolute top-4 left-4 right-4 flex flex-wrap justify-between items-start z-10 font-display gap-3">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="text-left">
-            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Guardian</p>
-            <p className="text-white text-base tracking-widest">{nickname}</p>
-          </div>
-          <div className="h-8 w-px bg-white/10" />
-          <div className="text-left">
-            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Nature Health</p>
-            <div className="flex items-center gap-2">
-              <div className="w-28 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className={cn("h-full transition-all duration-500", health < 30 ? "bg-destructive" : "bg-primary")}
-                  style={{ width: `${health}%` }}
+      {/* HUD - Top Bar */}
+      <div className="absolute top-0 left-0 right-0 z-10 px-3 py-2">
+        <div className="flex flex-wrap justify-between items-center gap-2 max-w-5xl mx-auto">
+          {/* Left HUD */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Guardian name */}
+            <div className="px-3 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06]">
+              <p className="text-white/30 text-[8px] tracking-[0.3em] uppercase font-display leading-none mb-0.5">Guardian</p>
+              <p className="text-white/90 text-xs tracking-widest font-display leading-none">{nickname}</p>
+            </div>
+
+            {/* Health */}
+            <div className="px-3 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] min-w-[140px]">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1">
+                  <Heart className={cn("w-3 h-3", health < 30 ? "text-red-400" : "text-emerald-400")} />
+                  <p className="text-white/30 text-[8px] tracking-[0.2em] uppercase font-display leading-none">Health</p>
+                </div>
+                <span className={cn("text-[10px] tabular-nums font-display", health < 30 ? "text-red-400" : "text-emerald-400")} data-testid="text-health">{health}%</span>
+              </div>
+              <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                <motion.div
+                  className={cn("h-full rounded-full", health < 30 ? "bg-red-500" : "bg-emerald-500")}
+                  animate={{ width: `${health}%` }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               </div>
-              <span className={cn("text-xs tabular-nums", health < 30 ? "text-destructive" : "text-primary")} data-testid="text-health">{health}%</span>
             </div>
-          </div>
-          <div className="h-8 w-px bg-white/10" />
-          <div className="text-left">
-            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Level {level} — {levelName}</p>
-            <div className="flex items-center gap-2">
-              <div className="w-20 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-accent/70 transition-all duration-300" style={{ width: `${Math.min(100, levelProgress)}%` }} />
-              </div>
-              <span className="text-[9px] text-white/30 tabular-nums">{score}/{nextThreshold}</span>
-            </div>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-6 flex-wrap">
-          {combo >= 3 && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-accent/10 border border-accent/20 rounded-full">
-              <Star className="w-3 h-3 text-accent" />
-              <span className="text-accent text-xs font-bold tabular-nums" data-testid="text-combo">{combo}x</span>
-              {getComboMultiplier() > 1 && (
-                <span className="text-accent/60 text-[9px]">({getComboMultiplier()}x pts)</span>
-              )}
+            {/* Level */}
+            <div className="px-3 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] min-w-[130px]">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1">
+                  <Star className="w-3 h-3 text-amber-400" />
+                  <p className="text-white/30 text-[8px] tracking-[0.2em] uppercase font-display leading-none">Lv.{level}</p>
+                </div>
+                <span className="text-amber-400/80 text-[8px] font-display leading-none truncate max-w-[60px]">{levelName}</span>
+              </div>
+              <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                <div className="h-full bg-amber-500/60 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, levelProgress)}%` }} />
+              </div>
             </div>
-          )}
-          <div className="text-center">
-            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Score</p>
-            <p className="text-accent text-2xl tabular-nums" data-testid="text-score">{score}</p>
           </div>
-          <div className="text-center">
-            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Collected</p>
-            <p className="text-primary text-2xl tabular-nums" data-testid="text-collected">{collected}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Destroyed</p>
-            <p className="text-orange-400 text-2xl tabular-nums" data-testid="text-destroyed">{destroyed}</p>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={() => setPaused(p => !p)} className="rounded-full" data-testid="button-pause-game">
-              {paused ? <Play className="w-5 h-5 text-white" /> : <Pause className="w-5 h-5 text-white" />}
-            </Button>
-            <Button variant="ghost" size="icon" onClick={onExit} className="rounded-full" data-testid="button-exit-game">
-              <X className="w-5 h-5 text-white" />
-            </Button>
+
+          {/* Right HUD */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Combo */}
+            <AnimatePresence>
+              {combo >= 3 && (
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/10 backdrop-blur-xl rounded-lg border border-amber-400/20"
+                >
+                  <Flame className="w-3 h-3 text-amber-400" />
+                  <span className="text-amber-300 text-xs font-bold tabular-nums font-display" data-testid="text-combo">{combo}x</span>
+                  {getComboMultiplier() > 1 && (
+                    <span className="text-amber-400/50 text-[8px] font-display">({getComboMultiplier()}x)</span>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Stats */}
+            <div className="flex items-center gap-0 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] overflow-hidden">
+              <div className="px-3 py-1.5 text-center border-r border-white/[0.04]">
+                <p className="text-white/25 text-[7px] tracking-[0.2em] uppercase font-display leading-none mb-0.5">Score</p>
+                <p className="text-amber-300 text-base tabular-nums font-display leading-none" data-testid="text-score">{score}</p>
+              </div>
+              <div className="px-3 py-1.5 text-center border-r border-white/[0.04]">
+                <p className="text-white/25 text-[7px] tracking-[0.2em] uppercase font-display leading-none mb-0.5">Saved</p>
+                <p className="text-emerald-300 text-base tabular-nums font-display leading-none" data-testid="text-collected">{collected}</p>
+              </div>
+              <div className="px-3 py-1.5 text-center">
+                <p className="text-white/25 text-[7px] tracking-[0.2em] uppercase font-display leading-none mb-0.5">Purified</p>
+                <p className="text-orange-300 text-base tabular-nums font-display leading-none" data-testid="text-destroyed">{destroyed}</p>
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-0.5">
+              <Button variant="ghost" size="icon" onClick={() => { keysRef.current.clear(); setPaused(p => !p); }} className="rounded-lg bg-black/30 border border-white/[0.06]" data-testid="button-pause-game">
+                {paused ? <Play className="w-4 h-4 text-white/60" /> : <Pause className="w-4 h-4 text-white/60" />}
+              </Button>
+              <Button variant="ghost" size="icon" onClick={onExit} className="rounded-lg bg-black/30 border border-white/[0.06]" data-testid="button-exit-game">
+                <X className="w-4 h-4 text-white/60" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Game Stage */}
-      <div className="relative w-full max-w-5xl aspect-video rounded-2xl border border-white/5 overflow-hidden shadow-[0_0_80px_-20px_rgba(0,0,0,0.8)]">
-
-        {/* Nature Background */}
+      <div
+        className="relative w-full max-w-5xl aspect-video rounded-xl overflow-hidden"
+        style={{
+          transform: screenShake ? `translate(${(Math.random() - 0.5) * screenShake}px, ${(Math.random() - 0.5) * screenShake}px)` : undefined,
+          boxShadow: '0 0 0 1px rgba(255,255,255,0.03), 0 0 120px -30px rgba(74,222,128,0.08), inset 0 0 60px rgba(0,0,0,0.3)'
+        }}
+      >
+        {/* ===== BACKGROUND ===== */}
         <div className="absolute inset-0">
-          {/* Sky */}
+          {/* Sky dome */}
           <div
-            className="absolute inset-0 transition-all duration-2000"
+            className="absolute inset-0"
             style={{
               background: health > 60
-                ? `linear-gradient(to bottom, 
-                    hsl(210, 50%, ${10 + healthPct * 10}%) 0%, 
-                    hsl(190, 35%, ${8 + healthPct * 8}%) 30%, 
-                    hsl(150, 45%, ${6 + healthPct * 12}%) 70%,
-                    hsl(130, 40%, ${5 + healthPct * 8}%) 100%)`
+                ? `radial-gradient(ellipse at 50% 0%, hsl(200, 40%, ${14 + healthPct * 8}%) 0%, hsl(170, 30%, ${8 + healthPct * 6}%) 40%, hsl(140, 35%, ${5 + healthPct * 8}%) 80%, hsl(120, 30%, ${4 + healthPct * 4}%) 100%)`
                 : health > 30
-                ? `linear-gradient(to bottom,
-                    hsl(35, 25%, 10%) 0%,
-                    hsl(25, 18%, 8%) 30%,
-                    hsl(45, 15%, 7%) 70%,
-                    hsl(80, 12%, 6%) 100%)`
-                : `linear-gradient(to bottom,
-                    hsl(0, 18%, 8%) 0%,
-                    hsl(350, 12%, 6%) 30%,
-                    hsl(340, 8%, 5%) 70%,
-                    hsl(0, 6%, 4%) 100%)`
+                ? `radial-gradient(ellipse at 50% 0%, hsl(35, 20%, 10%) 0%, hsl(30, 12%, 7%) 40%, hsl(50, 8%, 5%) 80%, hsl(60, 6%, 4%) 100%)`
+                : `radial-gradient(ellipse at 50% 0%, hsl(0, 15%, 8%) 0%, hsl(350, 10%, 5%) 40%, hsl(340, 6%, 4%) 80%, hsl(0, 4%, 3%) 100%)`
             }}
           />
 
+          {/* Atmospheric haze */}
+          <div className="absolute inset-0" style={{
+            background: health > 50
+              ? 'radial-gradient(ellipse at 30% 70%, rgba(74,222,128,0.03) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(34,197,94,0.02) 0%, transparent 40%)'
+              : 'none'
+          }} />
+
           {/* Stars */}
-          {[...Array(30)].map((_, i) => (
+          {[...Array(40)].map((_, i) => (
             <div
               key={`star-${i}`}
-              className="absolute rounded-full animate-pulse"
+              className="absolute rounded-full"
               style={{
-                left: `${(i * 13 + 7) % 100}%`,
-                top: `${(i * 11 + 3) % 35}%`,
-                width: `${i % 3 === 0 ? 2 : 1}px`,
-                height: `${i % 3 === 0 ? 2 : 1}px`,
-                backgroundColor: `rgba(255,255,255,${0.1 + (i % 4) * 0.05})`,
-                animationDelay: `${i * 0.2}s`,
-                animationDuration: `${2 + (i % 3)}s`
+                left: `${(i * 11 + 7) % 100}%`,
+                top: `${(i * 9 + 2) % 30}%`,
+                width: `${i % 5 === 0 ? 2 : 1}px`,
+                height: `${i % 5 === 0 ? 2 : 1}px`,
+                backgroundColor: `rgba(255,255,255,${0.06 + (i % 4) * 0.04})`,
+                animation: `pulse ${2 + (i % 4)}s ease-in-out infinite`,
+                animationDelay: `${i * 0.15}s`
               }}
             />
           ))}
 
           {/* Moving clouds */}
-          {health > 40 && [...Array(3)].map((_, i) => (
+          {health > 35 && [...Array(4)].map((_, i) => (
             <div
               key={`cloud-${i}`}
-              className="absolute rounded-full transition-colors duration-2000"
+              className="absolute"
               style={{
-                left: `${((bgOffset * (0.3 + i * 0.1) * 50 + i * 35) % 130) - 15}%`,
-                top: `${8 + i * 8}%`,
-                width: `${80 + i * 30}px`,
-                height: `${12 + i * 4}px`,
+                left: `${((bgOffset * (0.2 + i * 0.08) * 40 + i * 28) % 140) - 20}%`,
+                top: `${5 + i * 7}%`,
+                width: `${100 + i * 40}px`,
+                height: `${8 + i * 3}px`,
                 background: health > 60
-                  ? `radial-gradient(ellipse, rgba(255,255,255,${0.03 + i * 0.01}) 0%, transparent 70%)`
-                  : `radial-gradient(ellipse, rgba(200,180,150,${0.02}) 0%, transparent 70%)`,
+                  ? `radial-gradient(ellipse, rgba(255,255,255,${0.015 + i * 0.005}) 0%, transparent 70%)`
+                  : `radial-gradient(ellipse, rgba(180,160,130,${0.01}) 0%, transparent 70%)`,
+                filter: 'blur(1px)'
               }}
             />
           ))}
 
           {/* Far mountains */}
-          <div className="absolute bottom-[30%] left-0 right-0 pointer-events-none" style={{ transform: `translateX(${Math.sin(bgOffset * 0.1) * 2}px)` }}>
-            <div className="flex items-end justify-center">
-              {[
-                { w: 140, h: 80, ml: 0 },
-                { w: 200, h: 110, ml: -30 },
-                { w: 160, h: 95, ml: -40 },
-                { w: 180, h: 85, ml: -20 },
-                { w: 130, h: 70, ml: -25 },
-              ].map((m, i) => (
-                <Mountain
-                  key={`mtn-${i}`}
-                  className={cn("transition-colors duration-1000", health > 50 ? "text-emerald-900/40" : health > 25 ? "text-amber-900/30" : "text-zinc-800/30")}
-                  style={{ width: `${m.w}px`, height: `${m.h}px`, marginLeft: `${m.ml}px` }}
-                />
-              ))}
-            </div>
+          <div className="absolute bottom-[28%] left-0 right-0 pointer-events-none" style={{ transform: `translateX(${Math.sin(bgOffset * 0.08) * 1.5}px)` }}>
+            <svg viewBox="0 0 1200 200" className="w-full" preserveAspectRatio="none">
+              <path
+                d="M0,200 L0,140 Q100,80 200,120 Q280,60 380,100 Q450,40 550,90 Q620,50 700,80 Q800,30 900,70 Q980,50 1050,100 Q1120,60 1200,120 L1200,200 Z"
+                fill={health > 50 ? "rgba(6,78,59,0.35)" : health > 25 ? "rgba(80,60,30,0.2)" : "rgba(40,40,40,0.25)"}
+              />
+            </svg>
           </div>
 
           {/* Near mountains */}
-          <div className="absolute bottom-[20%] left-0 right-0 pointer-events-none" style={{ transform: `translateX(${Math.sin(bgOffset * 0.15) * 3}px)` }}>
-            <div className="flex items-end justify-around px-4">
-              {[0, 1, 2].map(i => (
-                <Mountain
-                  key={`near-mtn-${i}`}
-                  className={cn("transition-colors duration-1000", health > 50 ? "text-emerald-800/50" : health > 25 ? "text-amber-800/30" : "text-zinc-700/35")}
-                  style={{ width: `${100 + i * 20}px`, height: `${50 + i * 15}px` }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Trees */}
-          <div className="absolute bottom-[12%] left-0 right-0 flex items-end justify-around pointer-events-none px-2" style={{ transform: `translateX(${Math.sin(bgOffset * 0.2) * 4}px)` }}>
-            {[...Array(9)].map((_, i) => (
-              <TreePine
-                key={`tree-${i}`}
-                className={cn(
-                  "transition-all duration-1000",
-                  health > 50 ? "text-emerald-800/60" : health > 25 ? "text-yellow-900/35" : "text-zinc-800/25"
-                )}
-                style={{
-                  width: `${18 + (i % 4) * 6}px`,
-                  height: `${28 + (i % 4) * 10}px`,
-                  transform: `translateX(${(i % 2 === 0 ? -1 : 1) * (i * 2)}px)`
-                }}
+          <div className="absolute bottom-[18%] left-0 right-0 pointer-events-none" style={{ transform: `translateX(${Math.sin(bgOffset * 0.12) * 2.5}px)` }}>
+            <svg viewBox="0 0 1200 160" className="w-full" preserveAspectRatio="none">
+              <path
+                d="M0,160 L0,100 Q80,50 180,80 Q260,30 360,70 Q440,20 520,60 Q600,35 680,70 Q760,25 860,55 Q940,40 1020,80 Q1100,45 1200,90 L1200,160 Z"
+                fill={health > 50 ? "rgba(6,78,59,0.5)" : health > 25 ? "rgba(60,50,25,0.3)" : "rgba(35,30,30,0.35)"}
               />
-            ))}
+            </svg>
           </div>
 
-          {/* Flowers */}
-          {health > 40 && (
-            <div className="absolute bottom-[9%] left-0 right-0 flex items-end justify-around pointer-events-none px-12">
-              {[...Array(6)].map((_, i) => (
-                <Flower2
-                  key={`flower-${i}`}
-                  className="text-primary/15 animate-pulse"
-                  style={{ width: "10px", height: "10px", animationDelay: `${i * 0.4}s` }}
-                />
-              ))}
-            </div>
-          )}
+          {/* Treeline silhouettes */}
+          <div className="absolute bottom-[10%] left-0 right-0 pointer-events-none" style={{ transform: `translateX(${Math.sin(bgOffset * 0.15) * 3}px)` }}>
+            <svg viewBox="0 0 1200 100" className="w-full" preserveAspectRatio="none">
+              <path
+                d="M0,100 L0,60 L30,55 L45,30 L60,55 L90,50 L105,20 L120,50 L150,45 L170,15 L190,45 L220,50 L240,25 L260,50 L290,55 L310,35 L330,55 L360,50 L385,18 L410,50 L440,55 L460,30 L480,55 L510,50 L535,22 L560,50 L590,45 L610,28 L630,48 L660,52 L680,20 L700,50 L730,55 L755,32 L780,52 L810,48 L830,15 L850,48 L880,55 L900,35 L920,52 L950,50 L970,25 L990,50 L1020,55 L1040,30 L1060,55 L1090,48 L1110,22 L1130,50 L1160,55 L1180,38 L1200,52 L1200,100 Z"
+                fill={health > 50 ? "rgba(6,60,40,0.6)" : health > 25 ? "rgba(50,40,20,0.35)" : "rgba(25,22,22,0.4)"}
+              />
+            </svg>
+          </div>
 
           {/* Ground */}
           <div
-            className="absolute bottom-0 left-0 right-0 h-[10%] transition-colors duration-1000"
+            className="absolute bottom-0 left-0 right-0 h-[9%]"
             style={{
               background: health > 50
-                ? 'linear-gradient(to bottom, hsl(130, 35%, 10%) 0%, hsl(110, 25%, 7%) 100%)'
+                ? 'linear-gradient(to bottom, hsl(140, 30%, 8%) 0%, hsl(120, 25%, 5%) 100%)'
                 : health > 25
-                ? 'linear-gradient(to bottom, hsl(50, 15%, 8%) 0%, hsl(40, 10%, 6%) 100%)'
-                : 'linear-gradient(to bottom, hsl(0, 8%, 8%) 0%, hsl(0, 5%, 5%) 100%)'
+                ? 'linear-gradient(to bottom, hsl(40, 12%, 7%) 0%, hsl(35, 8%, 4%) 100%)'
+                : 'linear-gradient(to bottom, hsl(0, 6%, 6%) 0%, hsl(0, 4%, 3%) 100%)'
             }}
           />
 
-          {/* Light rays */}
-          {health > 55 && (
+          {/* Grass detail line */}
+          <div className="absolute bottom-[9%] left-0 right-0 h-[1px]"
+            style={{
+              background: health > 50
+                ? 'linear-gradient(90deg, transparent 0%, rgba(74,222,128,0.1) 20%, rgba(74,222,128,0.15) 50%, rgba(74,222,128,0.1) 80%, transparent 100%)'
+                : health > 25
+                ? 'linear-gradient(90deg, transparent 0%, rgba(150,120,60,0.08) 50%, transparent 100%)'
+                : 'linear-gradient(90deg, transparent 0%, rgba(120,50,50,0.06) 50%, transparent 100%)'
+            }}
+          />
+
+          {/* Light shafts */}
+          {health > 50 && (
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              {[...Array(4)].map((_, i) => (
+              {[...Array(5)].map((_, i) => (
                 <div
-                  key={`ray-${i}`}
-                  className="absolute top-0 bg-gradient-to-b from-yellow-200/4 to-transparent"
+                  key={`shaft-${i}`}
+                  className="absolute top-0"
                   style={{
-                    left: `${15 + i * 20}%`,
-                    width: '50px',
-                    height: '55%',
-                    transform: `rotate(${-8 + i * 5 + Math.sin(bgOffset * 0.3 + i) * 2}deg)`,
+                    left: `${10 + i * 18}%`,
+                    width: '40px',
+                    height: '65%',
+                    background: `linear-gradient(to bottom, rgba(255,250,200,${0.02 + Math.sin(bgOffset * 0.4 + i) * 0.01}) 0%, transparent 100%)`,
+                    transform: `rotate(${-6 + i * 3 + Math.sin(bgOffset * 0.25 + i * 1.5) * 1.5}deg) scaleX(${1 + Math.sin(bgOffset * 0.3 + i * 2) * 0.2})`,
                     transformOrigin: 'top center',
-                    opacity: 0.6 + Math.sin(bgOffset * 0.5 + i * 2) * 0.3
+                    filter: 'blur(3px)'
                   }}
                 />
               ))}
@@ -639,110 +666,152 @@ export function Game({ onExit, nickname }: GameProps) {
           )}
 
           {/* Fireflies */}
-          {health > 30 && [...Array(5)].map((_, i) => (
+          {health > 25 && [...Array(7)].map((_, i) => (
             <motion.div
               key={`firefly-${i}`}
               animate={{
-                x: [0, 20, -10, 15, 0],
-                y: [0, -15, 10, -5, 0],
-                opacity: [0, 0.6, 0.3, 0.7, 0]
+                x: [0, 15 + i * 3, -(10 + i * 2), 12, 0],
+                y: [0, -(10 + i * 2), 8, -(5 + i), 0],
+                opacity: [0, 0.5, 0.2, 0.6, 0],
+                scale: [0.8, 1.2, 0.9, 1.1, 0.8]
               }}
-              transition={{ repeat: Infinity, duration: 6 + i * 2, ease: "easeInOut", delay: i * 1.5 }}
-              className="absolute w-1 h-1 bg-yellow-300/40 rounded-full shadow-[0_0_4px_rgba(250,220,50,0.3)]"
-              style={{ left: `${15 + i * 18}%`, top: `${40 + (i % 3) * 15}%` }}
+              transition={{ repeat: Infinity, duration: 5 + i * 1.5, ease: "easeInOut", delay: i * 0.8 }}
+              className="absolute w-1 h-1 rounded-full"
+              style={{
+                left: `${10 + i * 13}%`,
+                top: `${35 + (i % 4) * 12}%`,
+                backgroundColor: 'rgba(250,240,100,0.5)',
+                boxShadow: '0 0 6px rgba(250,220,50,0.3), 0 0 12px rgba(250,220,50,0.1)'
+              }}
+            />
+          ))}
+
+          {/* Floating pollen/spores */}
+          {health > 40 && [...Array(4)].map((_, i) => (
+            <motion.div
+              key={`pollen-${i}`}
+              animate={{
+                y: [0, -80, -160],
+                x: [0, (i % 2 === 0 ? 30 : -20), (i % 2 === 0 ? -10 : 25)],
+                opacity: [0, 0.12, 0]
+              }}
+              transition={{ repeat: Infinity, duration: 12 + i * 3, ease: "linear", delay: i * 2.5 }}
+              className="absolute w-[3px] h-[3px] bg-emerald-300/10 rounded-full"
+              style={{ left: `${20 + i * 20}%`, bottom: '15%' }}
             />
           ))}
         </div>
 
-        {/* Pollution Machines */}
-        <div className="absolute top-0 left-0 right-0 h-5 flex justify-around items-start z-10">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="w-12 h-6 bg-zinc-900/80 border-x border-b border-zinc-700/20 rounded-b flex flex-col items-center pt-0.5">
-              <div className="w-6 h-[2px] bg-zinc-700/40" />
-              <div className="flex gap-0.5 mt-0.5">
-                <div className="w-1.5 h-1.5 bg-red-500/25 rounded-full animate-pulse" />
-                <div className="w-1.5 h-1.5 bg-orange-500/15 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+        {/* Vignette overlay */}
+        <div className="absolute inset-0 pointer-events-none z-[3]" style={{
+          background: 'radial-gradient(ellipse at 50% 50%, transparent 50%, rgba(0,0,0,0.4) 100%)'
+        }} />
+
+        {/* Pollution source pipes */}
+        <div className="absolute top-0 left-0 right-0 h-4 flex justify-around items-start z-[4]">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="relative">
+              <div className="w-10 h-4 bg-zinc-900/90 border-x border-b border-zinc-700/15 rounded-b-sm flex items-center justify-center">
+                <div className="w-4 h-[1px] bg-zinc-700/30" />
               </div>
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-1 bg-red-900/20 blur-[2px]" />
             </div>
           ))}
         </div>
 
-        {/* Damage overlay */}
-        <div className={cn("absolute inset-0 pointer-events-none transition-all duration-1000 z-[5]", health < 25 ? "bg-red-900/15 shadow-[inset_0_0_60px_rgba(200,0,0,0.1)]" : "")} />
+        {/* Damage vignette */}
+        {health < 30 && (
+          <div className="absolute inset-0 pointer-events-none z-[5]" style={{
+            background: `radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(180,20,20,${0.08 + (1 - healthPct) * 0.1}) 100%)`,
+            animation: 'pulse 2s ease-in-out infinite'
+          }} />
+        )}
 
         {/* Seed Burst */}
         <AnimatePresence>
           {showSeedBurst && (
             <motion.div
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 2 }}
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
               className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
             >
-              <div className="w-full h-full bg-primary/15 rounded-full blur-3xl animate-ping" />
-              <div className="absolute flex flex-col items-center">
-                <Sparkles className="w-16 h-16 text-primary mb-2" />
-                <span className="text-primary font-display text-3xl tracking-tighter">SEED BURST</span>
+              <motion.div
+                animate={{ scale: [1, 3], opacity: [0.3, 0] }}
+                transition={{ duration: 0.8 }}
+                className="absolute w-40 h-40 bg-emerald-400/20 rounded-full blur-3xl"
+              />
+              <div className="flex flex-col items-center">
+                <Sparkles className="w-14 h-14 text-emerald-300 mb-2" />
+                <span className="text-emerald-300 font-display text-2xl tracking-[0.2em] uppercase">Seed Burst</span>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Level Up Announcement */}
+        {/* Level Up */}
         <AnimatePresence>
           {showLevelUp && (
             <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.8 }}
+              initial={{ opacity: 0, y: 20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ type: "spring", stiffness: 200 }}
-              className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ type: "spring", stiffness: 250, damping: 20 }}
+              className="absolute top-14 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
             >
-              <div className="flex flex-col items-center gap-1 px-8 py-4 bg-accent/10 border border-accent/30 backdrop-blur-xl rounded-2xl">
-                <div className="flex items-center gap-2">
-                  <ChevronUp className="w-5 h-5 text-accent" />
-                  <span className="text-accent font-display text-lg tracking-[0.3em] uppercase">Level Up</span>
-                  <ChevronUp className="w-5 h-5 text-accent" />
+              <div className="flex flex-col items-center gap-1 px-6 py-3 bg-black/50 backdrop-blur-xl rounded-xl border border-amber-400/20 shadow-[0_0_30px_rgba(250,190,50,0.1)]">
+                <div className="flex items-center gap-1.5">
+                  <ChevronUp className="w-4 h-4 text-amber-400" />
+                  <span className="text-amber-400 font-display text-sm tracking-[0.3em] uppercase">Level Up</span>
+                  <ChevronUp className="w-4 h-4 text-amber-400" />
                 </div>
-                <span className="text-white font-display text-2xl tracking-tight">{levelName}</span>
-                <span className="text-white/40 text-[10px] tracking-widest uppercase">Level {level}</span>
+                <span className="text-white font-display text-xl tracking-tight">{levelName}</span>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Floating leaves */}
-        <div className="absolute inset-0 pointer-events-none">
-          {[...Array(3)].map((_, i) => (
-            <motion.div
-              key={`leaf-${i}`}
-              initial={{ opacity: 0, y: "100%" }}
-              animate={{ opacity: [0, 0.1, 0], y: "-100%", x: ["0%", (i % 2 === 0 ? "30%" : "-30%"), "0%"] }}
-              transition={{ repeat: Infinity, duration: 20 + i * 5, ease: "linear", delay: i * 4 }}
-              className="absolute text-primary/8 select-none"
-              style={{ left: `${15 + i * 25}%` }}
-            >
-              <Leaf className="w-6 h-6 rotate-45" />
-            </motion.div>
-          ))}
-        </div>
 
         {/* Score Popups */}
         <AnimatePresence>
           {scorePopups.map(p => (
             <motion.div
               key={p.id}
-              initial={{ opacity: 1, y: 0, scale: 1 }}
-              animate={{ opacity: 0, y: -30, scale: 1.2 }}
+              initial={{ opacity: 1, y: 0, scale: 0.8 }}
+              animate={{ opacity: 0, y: -25, scale: 1.1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 1 }}
-              className={`absolute z-30 font-display text-sm font-bold pointer-events-none ${p.color}`}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className={`absolute z-30 font-display text-xs font-bold pointer-events-none drop-shadow-lg ${p.color}`}
               style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)' }}
             >
               {p.text}
             </motion.div>
           ))}
         </AnimatePresence>
+
+        {/* Hit particles */}
+        <AnimatePresence>
+          {hitParticles.map(p => (
+            <motion.div key={p.id} className="absolute z-30 pointer-events-none" style={{ left: `${p.x}%`, top: `${p.y}%` }}>
+              {[...Array(4)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                  animate={{
+                    x: (Math.cos(i * Math.PI / 2) * 15),
+                    y: (Math.sin(i * Math.PI / 2) * 15),
+                    opacity: 0,
+                    scale: 0
+                  }}
+                  transition={{ duration: 0.4 }}
+                  className={`absolute w-1 h-1 rounded-full ${p.color}`}
+                />
+              ))}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        {/* ===== GAME OBJECTS ===== */}
 
         {/* Garbage */}
         {pollution.map((p) => {
@@ -758,14 +827,19 @@ export function Game({ onExit, nickname }: GameProps) {
               }}
               className="absolute z-[6]"
             >
-              <div className={`relative ${p.isToxic ? "scale-110" : ""}`}>
-                <div className={`w-8 h-8 rounded-md flex items-center justify-center border ${p.isToxic ? config.toxicColor : config.color}`}>
-                  <Icon className={`w-4 h-4 ${p.isToxic ? "text-red-400" : config.iconColor}`} />
+              <div className={cn("relative transition-transform", p.isToxic && "scale-110")}>
+                <div className={cn(
+                  "w-8 h-8 rounded-lg flex items-center justify-center border backdrop-blur-[2px]",
+                  p.isToxic ? config.toxicColor : config.color,
+                  "shadow-lg",
+                  p.isToxic ? "shadow-red-500/15" : config.bgGlow
+                )}>
+                  <Icon className={cn("w-4 h-4", p.isToxic ? "text-red-300" : config.iconColor)} />
                 </div>
                 {p.isToxic && (
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping opacity-40" />
+                  <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full animate-ping opacity-30" />
                 )}
-                <div className="absolute top-full left-1/2 -translate-x-1/2 w-[1px] h-4 bg-gradient-to-b from-white/8 to-transparent" />
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-[1px] h-3 bg-gradient-to-b from-white/[0.06] to-transparent" />
               </div>
             </div>
           );
@@ -775,26 +849,31 @@ export function Game({ onExit, nickname }: GameProps) {
         {projectiles.map((p) => (
           <div
             key={p.id}
-            style={{ left: `${p.x}%`, top: `${p.y}%` }}
-            className="absolute w-1 h-4 bg-accent rounded-full shadow-[0_0_8px_rgba(251,191,36,0.5)] z-[6]"
-          />
+            style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)' }}
+            className="absolute z-[6]"
+          >
+            <div className="relative">
+              <div className="w-1 h-5 bg-gradient-to-b from-amber-200 to-amber-500 rounded-full" />
+              <div className="absolute inset-0 w-1 h-5 bg-amber-300 rounded-full blur-[3px] opacity-60" />
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[2px] h-2 bg-gradient-to-b from-amber-400/30 to-transparent" />
+            </div>
+          </div>
         ))}
 
         {/* Power-Ups */}
         {powerUps.map((p) => (
           <motion.div
             key={p.id}
-            initial={{ rotate: 0 }}
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+            animate={{ rotate: 360, scale: [1, 1.1, 1] }}
+            transition={{ rotate: { repeat: Infinity, duration: 3, ease: "linear" }, scale: { repeat: Infinity, duration: 1.5, ease: "easeInOut" } }}
             style={{ left: `${p.x}%`, top: `${p.y}%` }}
             className="absolute -translate-x-1/2 -translate-y-1/2 z-[7]"
           >
-            <div className="w-7 h-7 bg-accent/15 rounded-lg border border-accent/40 flex items-center justify-center backdrop-blur-sm">
-              {p.type === "shield" && <Shield className="w-3.5 h-3.5 text-accent" />}
-              {p.type === "beam" && <Zap className="w-3.5 h-3.5 text-accent" />}
-              {p.type === "slow" && <Clock className="w-3.5 h-3.5 text-accent" />}
-              {p.type === "seed" && <Leaf className="w-3.5 h-3.5 text-accent" />}
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center border backdrop-blur-sm bg-amber-500/10 border-amber-400/30 shadow-lg shadow-amber-500/10">
+              {p.type === "shield" && <Shield className="w-3.5 h-3.5 text-amber-300" />}
+              {p.type === "beam" && <Zap className="w-3.5 h-3.5 text-amber-300" />}
+              {p.type === "slow" && <Clock className="w-3.5 h-3.5 text-amber-300" />}
+              {p.type === "seed" && <Leaf className="w-3.5 h-3.5 text-amber-300" />}
             </div>
           </motion.div>
         ))}
@@ -802,91 +881,122 @@ export function Game({ onExit, nickname }: GameProps) {
         {/* Player + Container */}
         <motion.div
           animate={{ x: `${playerPosition}%` }}
-          transition={{ type: "spring", stiffness: 400, damping: 35 }}
+          transition={{ type: "spring", stiffness: 500, damping: 40 }}
           className="absolute bottom-0 left-0 -translate-x-1/2 z-[8]"
         >
           <div className="relative flex flex-col items-center">
+            {/* Guardian */}
             <div className="relative mb-0.5">
+              {/* Shield aura */}
               {activePowerUp === "shield" && (
                 <motion.div
-                  animate={{ scale: [1, 1.08, 1] }}
+                  animate={{ scale: [1, 1.06, 1], opacity: [0.4, 0.6, 0.4] }}
                   transition={{ repeat: Infinity, duration: 1.5 }}
-                  className="absolute -inset-5 rounded-full border border-accent/25 bg-accent/5"
+                  className="absolute -inset-4 rounded-full border border-amber-300/20 bg-amber-400/[0.03]"
                 />
               )}
-              <div className="w-10 h-10 bg-primary/40 rounded-lg backdrop-blur-md border border-primary/50 flex items-center justify-center relative z-10 shadow-lg shadow-primary/20">
-                <Leaf className="w-5 h-5 text-primary animate-pulse" />
+              {/* Glow base */}
+              <div className="absolute -inset-2 bg-emerald-400/10 rounded-full blur-md" />
+              {/* Player body */}
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center relative z-10 border"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(6,78,59,0.7) 0%, rgba(22,101,52,0.5) 100%)',
+                  borderColor: 'rgba(74,222,128,0.3)',
+                  boxShadow: '0 0 20px rgba(74,222,128,0.15), inset 0 1px 0 rgba(255,255,255,0.05)'
+                }}
+              >
+                <Leaf className="w-5 h-5 text-emerald-300" style={{ filter: 'drop-shadow(0 0 4px rgba(74,222,128,0.4))' }} />
               </div>
+              {/* Muzzle flash */}
+              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-amber-300/40 rounded-full blur-[2px]" />
             </div>
-            <div className="relative w-16 h-6" data-testid="garbage-container">
-              <div className="absolute inset-0 bg-emerald-900/60 border border-emerald-600/40 rounded-b rounded-t-sm overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-emerald-500/25" />
+
+            {/* Container */}
+            <div className="relative w-16 h-5" data-testid="garbage-container">
+              <div className="absolute inset-0 rounded-b rounded-t-[2px] overflow-hidden border"
+                style={{
+                  background: 'linear-gradient(to bottom, rgba(6,78,59,0.5) 0%, rgba(6,60,40,0.7) 100%)',
+                  borderColor: 'rgba(74,222,128,0.2)'
+                }}
+              >
+                <div className="absolute top-0 left-0 right-0 h-[1px] bg-emerald-400/20" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[7px] text-emerald-300/40 font-display uppercase tracking-widest">recycle</span>
+                  <span className="text-[6px] text-emerald-400/30 font-display uppercase tracking-[0.25em]">recycle</span>
                 </div>
               </div>
               {collected > 0 && (
-                <div className="absolute -inset-1 bg-primary/8 rounded-lg blur-md -z-10" />
+                <div className="absolute -inset-2 bg-emerald-400/[0.04] rounded-lg blur-lg -z-10" />
               )}
             </div>
           </div>
         </motion.div>
 
-        {/* Active Power-up indicator */}
+        {/* Active power-up badge */}
         <AnimatePresence>
           {activePowerUp && (
             <motion.div
-              initial={{ opacity: 0, x: 15 }}
+              initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 15 }}
-              className="absolute right-3 bottom-3 bg-accent/8 border border-accent/15 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1.5 text-accent font-display text-[10px] z-10"
+              exit={{ opacity: 0, x: 10 }}
+              className="absolute right-2 bottom-2 bg-black/40 backdrop-blur-xl border border-amber-400/15 px-2 py-1 rounded-lg flex items-center gap-1.5 text-amber-300 font-display text-[9px] z-10"
             >
               {activePowerUp === "shield" && <Shield className="w-3 h-3" />}
               {activePowerUp === "beam" && <Zap className="w-3 h-3" />}
               {activePowerUp === "slow" && <Clock className="w-3 h-3" />}
               <span className="uppercase tracking-widest">{activePowerUp}</span>
-              <span className="w-px h-2.5 bg-accent/20" />
+              <span className="w-px h-2 bg-amber-400/15" />
               <span className="tabular-nums">{powerUpTimer}s</span>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Pause Overlay */}
+        {/* ===== OVERLAYS ===== */}
+
+        {/* Pause */}
         <AnimatePresence>
           {paused && !gameOver && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-30 bg-black/60 backdrop-blur-lg flex flex-col items-center justify-center"
+              className="absolute inset-0 z-30 flex flex-col items-center justify-center"
+              style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.8) 100%)', backdropFilter: 'blur(8px)' }}
             >
-              <Pause className="w-12 h-12 text-white/30 mb-4" />
-              <h2 className="text-4xl font-display text-white mb-2 tracking-[0.3em] uppercase">Paused</h2>
-              <p className="text-white/40 font-body text-sm mb-8">The forest waits for your return</p>
-              <div className="grid grid-cols-3 gap-6 mb-8 text-center">
-                <div>
-                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Score</p>
-                  <p className="text-white text-2xl font-display tabular-nums">{score}</p>
+              <motion.div
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                className="flex flex-col items-center"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-5">
+                  <Pause className="w-8 h-8 text-white/20" />
                 </div>
-                <div>
-                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Level</p>
-                  <p className="text-accent text-2xl font-display">{level}</p>
+                <h2 className="text-3xl font-display text-white/90 mb-1 tracking-[0.3em] uppercase">Paused</h2>
+                <p className="text-white/30 font-body text-xs mb-6">The forest holds its breath</p>
+
+                <div className="flex gap-4 mb-6">
+                  {[
+                    { label: "Score", value: score, color: "text-amber-300" },
+                    { label: "Level", value: level, color: "text-emerald-300" },
+                    { label: "Time", value: `${Math.floor(time)}s`, color: "text-white/70" },
+                  ].map(s => (
+                    <div key={s.label} className="px-4 py-2 bg-white/[0.03] rounded-lg border border-white/[0.04] text-center min-w-[70px]">
+                      <p className="text-white/20 text-[7px] tracking-[0.3em] uppercase font-display mb-0.5">{s.label}</p>
+                      <p className={`text-lg font-display tabular-nums ${s.color}`}>{s.value}</p>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Time</p>
-                  <p className="text-white text-2xl font-display tabular-nums">{Math.floor(time)}s</p>
+
+                <div className="flex gap-2">
+                  <Button onClick={() => setPaused(false)} className="px-5 rounded-lg bg-emerald-600/80 text-white font-display text-xs tracking-widest border border-emerald-500/30" data-testid="button-resume-game">
+                    <Play className="w-3.5 h-3.5 mr-1.5" />
+                    RESUME
+                  </Button>
+                  <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-white/50 font-display text-xs tracking-widest border border-white/[0.06]" data-testid="button-quit-game">
+                    LEAVE
+                  </Button>
                 </div>
-              </div>
-              <div className="flex gap-3">
-                <Button onClick={() => setPaused(false)} className="px-6 rounded-full bg-primary/80 text-white font-display tracking-widest" data-testid="button-resume-game">
-                  <Play className="w-4 h-4 mr-2" />
-                  RESUME
-                </Button>
-                <Button variant="outline" onClick={onExit} className="px-6 rounded-full border-white/15 text-white/70 font-display tracking-widest" data-testid="button-quit-game">
-                  LEAVE REALM
-                </Button>
-              </div>
-              <p className="text-white/20 text-[9px] tracking-widest uppercase mt-6">Press ESC to resume</p>
+                <p className="text-white/15 text-[8px] tracking-[0.3em] uppercase mt-4 font-display">ESC to resume</p>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -895,65 +1005,72 @@ export function Game({ onExit, nickname }: GameProps) {
         <AnimatePresence>
           {gameOver && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="absolute inset-0 z-20 bg-black/75 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center p-4 text-center"
+              style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.85) 100%)', backdropFilter: 'blur(12px)' }}
             >
-              <Trophy className="w-14 h-14 text-accent mb-4" />
-              <h2 className="text-4xl font-display text-white mb-1 tracking-tighter">SURVIVAL ENDED</h2>
-              <p className="text-white/50 font-body text-sm mb-6 max-w-sm">Nature does not fight back. It waits for someone to protect it.</p>
+              <motion.div
+                initial={{ scale: 0.85, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="flex flex-col items-center max-w-md w-full"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-amber-500/[0.06] border border-amber-400/15 flex items-center justify-center mb-4">
+                  <Trophy className="w-8 h-8 text-amber-400/80" />
+                </div>
+                <h2 className="text-3xl font-display text-white/90 mb-0.5 tracking-tight">The Forest Fell Silent</h2>
+                <p className="text-white/30 font-body text-xs mb-5">But the seeds of change have been planted</p>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                <div>
-                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Final Score</p>
-                  <p className="text-white text-2xl font-display tabular-nums">{score}</p>
+                <div className="w-full grid grid-cols-4 gap-2 mb-4">
+                  {[
+                    { label: "Score", value: score, color: "text-amber-300" },
+                    { label: "Saved", value: collected, color: "text-emerald-300" },
+                    { label: "Purified", value: destroyed, color: "text-orange-300" },
+                    { label: "Best Combo", value: `${maxCombo}x`, color: "text-amber-300" },
+                  ].map(s => (
+                    <div key={s.label} className="px-2 py-2 bg-white/[0.03] rounded-lg border border-white/[0.04] text-center">
+                      <p className="text-white/20 text-[7px] tracking-[0.2em] uppercase font-display mb-0.5">{s.label}</p>
+                      <p className={`text-lg font-display tabular-nums ${s.color}`}>{s.value}</p>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Collected</p>
-                  <p className="text-primary text-2xl font-display tabular-nums">{collected}</p>
-                </div>
-                <div>
-                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Destroyed</p>
-                  <p className="text-orange-400 text-2xl font-display tabular-nums">{destroyed}</p>
-                </div>
-                <div>
-                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Best Combo</p>
-                  <p className="text-accent text-2xl font-display tabular-nums">{maxCombo}x</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 mb-6 px-4 py-2 bg-white/5 rounded-full border border-white/10">
-                <span className="text-white/40 text-[10px] tracking-widest uppercase">Level {level}</span>
-                <span className="text-white/20">-</span>
-                <span className="text-accent font-display text-sm">{levelName}</span>
-                <span className="text-white/20">-</span>
-                <span className="text-white/40 text-[10px] tabular-nums">{Math.floor(time)}s survived</span>
-              </div>
 
-              <div className="flex gap-3">
-                <Button onClick={resetGame} className="px-6 rounded-full bg-primary text-white font-display tracking-widest" data-testid="button-restart-game">
-                  REBIND SPIRIT
-                </Button>
-                <Button variant="outline" onClick={onExit} className="px-6 rounded-full border-white/15 text-white font-display tracking-widest" data-testid="button-leave-game">
-                  LEAVE REALM
-                </Button>
-              </div>
+                <div className="flex items-center gap-1.5 mb-5 px-3 py-1.5 bg-white/[0.03] rounded-lg border border-white/[0.04]">
+                  <Star className="w-3 h-3 text-amber-400/60" />
+                  <span className="text-white/30 text-[9px] tracking-widest uppercase font-display">Level {level}</span>
+                  <span className="text-white/10">-</span>
+                  <span className="text-amber-300/80 font-display text-xs">{levelName}</span>
+                  <span className="text-white/10">-</span>
+                  <span className="text-white/30 text-[9px] tabular-nums font-display">{Math.floor(time)}s</span>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button onClick={resetGame} className="px-5 rounded-lg bg-emerald-600/80 text-white font-display text-xs tracking-widest border border-emerald-500/30" data-testid="button-restart-game">
+                    TRY AGAIN
+                  </Button>
+                  <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-white/50 font-display text-xs tracking-widest border border-white/[0.06]" data-testid="button-leave-game">
+                    LEAVE
+                  </Button>
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Controls hint */}
-      <div className="mt-4 flex items-center gap-6 text-white/20 font-display text-[9px] tracking-[0.4em] uppercase flex-wrap justify-center">
-        <div className="flex items-center gap-1.5">
-          <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[8px]">A / D</kbd>
-          <span>move</span>
+      {/* Bottom hints */}
+      <div className="mt-3 flex items-center gap-4 text-white/15 font-display text-[8px] tracking-[0.3em] uppercase flex-wrap justify-center">
+        <div className="flex items-center gap-1">
+          <kbd className="px-1 py-0.5 bg-white/[0.04] border border-white/[0.06] rounded text-[7px] tabular-nums">A/D</kbd>
+          <span>Move</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[8px]">ESC</kbd>
-          <span>pause</span>
+        <div className="flex items-center gap-1">
+          <kbd className="px-1 py-0.5 bg-white/[0.04] border border-white/[0.06] rounded text-[7px]">ESC</kbd>
+          <span>Pause</span>
         </div>
-        <span className="text-primary/40">catch garbage in container for bonus</span>
-        <span className="text-accent/40">chain hits for combo multiplier</span>
+        <span className="text-emerald-400/20">Catch trash for bonus</span>
+        <span className="text-amber-400/20">Chain hits for combos</span>
       </div>
     </motion.div>
   );
