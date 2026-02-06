@@ -25,7 +25,7 @@ interface PowerUp {
   id: number;
   x: number;
   y: number;
-  type: "shield" | "beam" | "slow";
+  type: "shield" | "beam" | "slow" | "seed";
 }
 
 interface GameProps {
@@ -47,6 +47,7 @@ export function Game({ onExit, nickname }: GameProps) {
   
   const [activePowerUp, setActivePowerUp] = useState<string | null>(null);
   const [powerUpTimer, setPowerUpTimer] = useState(0);
+  const [showSeedBurst, setShowSeedBurst] = useState(false);
 
   const gameLoopRef = useRef<number>();
   const lastShotRef = useRef<number>(0);
@@ -98,7 +99,7 @@ export function Game({ onExit, nickname }: GameProps) {
 
       // Spawn Power-ups
       if (timestamp - lastPowerUpRef.current > 15000) {
-        const types: ("shield" | "beam" | "slow")[] = ["shield", "beam", "slow"];
+        const types: ("shield" | "beam" | "slow" | "seed")[] = ["shield", "beam", "slow", "seed"];
         setPowerUps(prev => [...prev, {
           id: Date.now(),
           x: Math.random() * 90 + 5,
@@ -161,8 +162,16 @@ export function Game({ onExit, nickname }: GameProps) {
       setPowerUps(prev => {
         const collected = prev.find(p => Math.abs(p.x - playerPosition) < 5 && Math.abs(p.y - PLAYER_Y) < 5);
         if (collected) {
-          setActivePowerUp(collected.type);
-          setPowerUpTimer(10);
+          if (collected.type === "seed") {
+            setPollution([]);
+            setScore(s => s + 100);
+            setHealth(h => Math.min(100, h + 20));
+            setShowSeedBurst(true);
+            setTimeout(() => setShowSeedBurst(false), 1000);
+          } else {
+            setActivePowerUp(collected.type);
+            setPowerUpTimer(10);
+          }
           return prev.filter(p => p.id !== collected.id);
         }
         return prev;
@@ -256,6 +265,24 @@ export function Game({ onExit, nickname }: GameProps) {
           <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-primary/40 to-transparent" />
         </div>
 
+        {/* Seed Burst Effect */}
+        <AnimatePresence>
+          {showSeedBurst && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 2 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+            >
+              <div className="w-full h-full bg-primary/20 rounded-full blur-3xl animate-ping" />
+              <div className="absolute flex flex-col items-center">
+                <Sparkles className="w-20 h-20 text-primary mb-4" />
+                <span className="text-primary font-display text-4xl tracking-tighter">SEED BURST</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Pollution */}
         {pollution.map((p) => (
           <motion.div
@@ -295,6 +322,7 @@ export function Game({ onExit, nickname }: GameProps) {
               {p.type === "shield" && <Shield className="w-4 h-4 text-accent" />}
               {p.type === "beam" && <Zap className="w-4 h-4 text-accent" />}
               {p.type === "slow" && <Clock className="w-4 h-4 text-accent" />}
+              {p.type === "seed" && <Leaf className="w-4 h-4 text-accent" />}
             </div>
           </motion.div>
         ))}

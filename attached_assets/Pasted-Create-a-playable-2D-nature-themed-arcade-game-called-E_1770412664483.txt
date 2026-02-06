@@ -1,0 +1,135 @@
+Create a playable 2D nature-themed arcade game called “Earth Keeper.”
+The game should feel alive, meaningful, and environmental.
+
+🌱 PLAYER & ROLE
+
+The player is Earth Keeper — a guardian chosen by nature.
+
+The player controls a nature-powered guardian at the bottom of the screen
+(eco-drone, forest spirit, or green energy vessel).
+
+The guardian moves left and right smoothly.
+
+The guardian automatically releases continuous eco-energy shots upward
+(cleaning beams, seeds, water pulses, or green light).
+
+The player does not press a fire button — nature acts continuously.
+
+☔ GARBAGE RAIN (CORE THREAT)
+
+From the sky, pollution rains down constantly, like a storm against nature.
+
+Falling objects are ONLY environmental waste:
+
+Plastic bottles and bags
+
+Metal cans and scraps
+
+Electronic waste
+
+Toxic barrels
+
+Oil drops
+
+This should feel like a “pollution rain” — relentless and increasing over time.
+
+🌍 INTERACTION & GOAL
+
+Eco-shots clean/destroy garbage on contact
+
+Cleaned garbage:
+
+Increases Score
+
+Slightly restores Nature Health
+
+Garbage that reaches the ground:
+
+Damages Nature Health
+
+Toxic garbage:
+
+Causes heavier damage
+
+🎯 Goal:
+Survive as long as possible and keep Nature Health alive.
+
+❌ Failure:
+When Nature Health reaches zero, the land is lost.
+
+🧰 TOOLS & POWER-UPS (NATURE GIFTS)
+
+Nature occasionally helps the player with tools:
+
+🌿 Shield of Leaves – temporary protection
+
+💧 Water Surge – stronger or wider cleaning shots
+
+⏳ Time Bloom – slows falling garbage
+
+🌱 Seed Burst – clears multiple garbage objects at once
+
+Power-ups appear naturally, glowing softly.
+
+📊 HUD & FEEDBACK
+
+Always visible, styled with organic UI:
+
+🌱 Nature Health Bar
+
+⭐ Score
+
+⏱️ Time Survived
+
+🔼 Level / Intensity
+
+Visual feedback:
+
+Screen subtly darkens when nature is hurt
+
+Brighter greens and light when nature recovers
+
+📈 PROGRESSION & DIFFICULTY
+
+As time passes:
+
+Garbage falls faster
+
+More garbage appears at once
+
+Toxic waste becomes more frequent
+
+The storm feels heavier and more urgent
+
+The game should pressure the player emotionally, not just mechanically.
+
+🎨 ATMOSPHERE & STYLE
+
+Backgrounds: forests, fields, rivers, sky
+
+Colors: greens, blues, earth tones
+
+Motion: leaves drifting, light rays, soft wind feeling
+
+Mood: calm but urgent, hopeful but fragile
+
+💬 CORE MESSAGE (SUBTLE, NOT PREACHY)
+
+The game should quietly communicate:
+
+“Nature does not fight back.
+It waits for someone to protect it.”
+
+⚙️ OUTPUT EXPECTATION
+
+Generate:
+
+A fully playable game
+
+Clear gameplay loop
+
+Player, garbage rain, tools, score, health
+
+Ready to embed in a website
+
+This is a game, not a demo or concept.
