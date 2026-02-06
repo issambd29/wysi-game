@@ -13,6 +13,8 @@ interface GameObject {
   type: "bottle" | "bag" | "can" | "barrel" | "oil" | "ewaste";
   speed: number;
   isToxic: boolean;
+  rotation: number;
+  rotationSpeed: number;
 }
 
 interface Projectile {
@@ -93,7 +95,9 @@ export function Game({ onExit, nickname }: GameProps) {
           y: -10,
           type,
           speed: (0.15 + Math.random() * 0.25) * (activePowerUp === "slow" ? 0.4 : 1) * (1 + level * 0.15),
-          isToxic
+          isToxic,
+          rotation: Math.random() * 360,
+          rotationSpeed: (Math.random() - 0.5) * 2
         }]);
         lastSpawnRef.current = timestamp;
       }
@@ -124,7 +128,11 @@ export function Game({ onExit, nickname }: GameProps) {
             return false;
           }
           return true;
-        }).map(p => ({ ...p, y: p.y + p.speed }));
+        }).map(p => ({ 
+          ...p, 
+          y: p.y + p.speed,
+          rotation: p.rotation + p.rotationSpeed
+        }));
         
         if (newHealth <= 0 && !gameOver) {
           setGameOver(true);
@@ -329,7 +337,11 @@ export function Game({ onExit, nickname }: GameProps) {
         {pollution.map((p) => (
           <motion.div
             key={p.id}
-            style={{ left: `${p.x}%`, top: `${p.y}%` }}
+            style={{ 
+              left: `${p.x}%`, 
+              top: `${p.y}%`,
+              rotate: `${p.rotation}deg`
+            }}
             className="absolute -translate-x-1/2 -translate-y-1/2"
           >
             <div className={`relative ${p.isToxic ? "scale-125" : "scale-100"}`}>
@@ -337,6 +349,8 @@ export function Game({ onExit, nickname }: GameProps) {
               <div className="absolute inset-0 flex items-center justify-center text-white/80">
                 {p.type === "barrel" ? <Shield className="w-5 h-5 text-destructive rotate-180" /> : <Wind className="w-5 h-5" />}
               </div>
+              {/* Falling trail effect */}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 w-1 h-8 bg-gradient-to-b from-white/10 to-transparent blur-[1px]" />
             </div>
           </motion.div>
         ))}
