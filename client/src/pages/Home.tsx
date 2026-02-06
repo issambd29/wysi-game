@@ -62,14 +62,15 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-2"
           >
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm rounded-full border border-white/10">
+            <div className="flex items-center gap-3 px-6 py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
               <Sparkles className="w-4 h-4 text-accent animate-pulse" />
-              <span className="text-white/60 font-sans text-xs tracking-[0.3em] uppercase">
+              <span className="text-white/60 font-sans text-[10px] tracking-[0.4em] uppercase">
                 Welcome back, Earth Keeper
               </span>
-              <span className="text-primary font-bold tracking-widest uppercase text-sm">
+              <span className="text-primary font-bold tracking-[0.2em] uppercase text-sm">
                 {profile.nickname}
               </span>
+              <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-ping" />
             </div>
           </motion.div>
         )}

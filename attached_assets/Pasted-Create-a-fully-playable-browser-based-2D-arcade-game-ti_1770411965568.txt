@@ -1,0 +1,183 @@
+Create a fully playable browser-based 2D arcade game titled “Earth Keeper”, designed to be embedded inside an existing nature-themed website.
+
+This must be a real, functional game with actual gameplay, logic, and progression — not a mockup.
+
+🎯 CORE GAME CONCEPT
+
+The player is a Guardian of Nature.
+
+Pollution is falling from the sky and threatening forests, rivers, and the land.
+The player must clean the pollution continuously to protect the environment.
+
+Win condition: Survive and keep Nature Health above zero.
+Lose condition: Nature Health reaches zero.
+
+Core message:
+
+Nature survives only if it is protected.
+
+🧍 PLAYER PROFILE (REQUIRED)
+
+Implement a player profile system using Firebase Realtime Database.
+
+Behavior
+
+On first visit:
+
+Prompt the player to enter a nickname
+
+Save it in Firebase Realtime Database
+
+On return:
+
+Load the nickname
+
+Display a welcome message (e.g., “Welcome back, Earth Keeper”)
+
+Store:
+
+Nickname
+
+Best score (for leaderboard use)
+
+Use simple JavaScript only.
+
+🕹️ GAMEPLAY MECHANICS
+Player
+
+A nature-themed guardian (eco-drone, forest spirit, ranger, or energy totem)
+
+Positioned at the bottom of the screen
+
+Moves left and right
+
+Continuously fires eco-energy shots automatically upward
+
+Controls
+
+Move Left / Right: Arrow keys or A / D
+
+Shooting: Automatic (continuous)
+
+☣️ FALLING OBJECTS (POLLUTION ONLY)
+
+Objects falling from the top must ONLY be environmental pollution:
+
+Plastic bottles and bags
+
+Metal cans and scraps
+
+Toxic barrels
+
+Oil blobs
+
+Electronic waste
+
+NO enemies, NO meteors, NO asteroids.
+
+💥 INTERACTIONS
+
+Eco-shots destroy pollution on collision
+
+Destroyed pollution:
+
+Increases score
+
+Slightly restores Nature Health
+
+Pollution reaching the ground:
+
+Damages Nature Health
+
+Toxic pollution:
+
+Causes heavier damage
+
+🎁 POWER-UPS
+
+Include random power-ups:
+
+Shield (temporary protection)
+
+Enhanced eco-beam (stronger shots)
+
+Slow motion (slows falling pollution)
+
+📊 HUD (ALWAYS VISIBLE)
+
+Score
+
+Time survived
+
+Nature Health Bar
+
+Current Level
+
+HUD style must match natural UI (leaves, wood, soft glow).
+
+📈 DIFFICULTY PROGRESSION
+
+Game difficulty increases over time:
+
+Faster falling pollution
+
+Increased object density
+
+More toxic waste
+
+Visual intensity increases gradually
+
+🎨 VISUAL STYLE
+
+Nature-based theme
+
+Backgrounds:
+
+Forests, rivers, mountains, sky
+
+Color palette:
+
+Greens, browns, blues
+
+Soft lighting and organic shapes
+
+Smooth animations
+
+🔊 AUDIO (OPTIONAL BUT RECOMMENDED)
+
+Calm nature ambience
+
+Soft eco-energy firing sounds
+
+Pollution impact sounds
+
+⚙️ TECHNICAL REQUIREMENTS
+
+JavaScript (ES6+)
+
+HTML Canvas (preferred) or WebGL
+
+Modular, readable, commented code
+
+Runs smoothly on desktop and mobile
+
+Easy to embed into an existing website
+
+📦 OUTPUT REQUIREMENTS
+
+Generate:
+
+Complete playable game code
+
+Game loop
+
+Collision detection
+
+Continuous shooting logic
+
+Profile integration logic
+
+Clear instructions to run or embed
+
+Do NOT generate placeholders.
+Generate a fully working game.
