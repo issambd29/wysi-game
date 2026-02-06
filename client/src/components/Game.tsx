@@ -110,7 +110,7 @@ export function Game({ onExit, nickname }: GameProps) {
   const PLAYER_Y = 85;
   const SHOT_SPEED = 2;
   const CONTAINER_Y = 95;
-  const CONTAINER_WIDTH = 12;
+  const CONTAINER_WIDTH = 16;
   const POLLUTION_TYPES: GameObject["type"][] = ["bottle", "bag", "can", "barrel", "oil", "ewaste"];
   const COMBO_TIMEOUT = 2000;
 
@@ -198,14 +198,14 @@ export function Game({ onExit, nickname }: GameProps) {
       const keys = keysRef.current;
       if (keys.has("arrowleft") || keys.has("a")) {
         setPlayerPosition(p => {
-          const next = Math.max(5, p - 3 * dtScale);
+          const next = Math.max(5, p - 5 * dtScale);
           playerPosRef.current = next;
           return next;
         });
       }
       if (keys.has("arrowright") || keys.has("d")) {
         setPlayerPosition(p => {
-          const next = Math.min(95, p + 3 * dtScale);
+          const next = Math.min(95, p + 5 * dtScale);
           playerPosRef.current = next;
           return next;
         });
@@ -879,26 +879,22 @@ export function Game({ onExit, nickname }: GameProps) {
         ))}
 
         {/* Player + Container */}
-        <motion.div
-          animate={{ x: `${playerPosition}%` }}
-          transition={{ type: "spring", stiffness: 500, damping: 40 }}
+        <div
           className="absolute bottom-0 left-0 -translate-x-1/2 z-[8]"
+          style={{ left: `${playerPosition}%`, transition: 'left 0.03s linear' }}
         >
           <div className="relative flex flex-col items-center">
             {/* Guardian */}
             <div className="relative mb-0.5">
-              {/* Shield aura */}
               {activePowerUp === "shield" && (
                 <motion.div
                   animate={{ scale: [1, 1.06, 1], opacity: [0.4, 0.6, 0.4] }}
                   transition={{ repeat: Infinity, duration: 1.5 }}
-                  className="absolute -inset-4 rounded-full border border-amber-300/20 bg-amber-400/[0.03]"
+                  className="absolute -inset-5 rounded-full border border-amber-300/20 bg-amber-400/[0.03]"
                 />
               )}
-              {/* Glow base */}
-              <div className="absolute -inset-2 bg-emerald-400/10 rounded-full blur-md" />
-              {/* Player body */}
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center relative z-10 border"
+              <div className="absolute -inset-3 bg-emerald-400/10 rounded-full blur-lg" />
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center relative z-10 border"
                 style={{
                   background: 'linear-gradient(135deg, rgba(6,78,59,0.7) 0%, rgba(22,101,52,0.5) 100%)',
                   borderColor: 'rgba(74,222,128,0.3)',
@@ -907,29 +903,34 @@ export function Game({ onExit, nickname }: GameProps) {
               >
                 <Leaf className="w-5 h-5 text-emerald-300" style={{ filter: 'drop-shadow(0 0 4px rgba(74,222,128,0.4))' }} />
               </div>
-              {/* Muzzle flash */}
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-amber-300/40 rounded-full blur-[2px]" />
             </div>
 
-            {/* Container */}
-            <div className="relative w-16 h-5" data-testid="garbage-container">
-              <div className="absolute inset-0 rounded-b rounded-t-[2px] overflow-hidden border"
+            {/* Container - bigger and more visible */}
+            <div className="relative w-28 h-8" data-testid="garbage-container">
+              <div className="absolute inset-0 rounded-b-lg rounded-t-sm overflow-hidden border-2"
                 style={{
-                  background: 'linear-gradient(to bottom, rgba(6,78,59,0.5) 0%, rgba(6,60,40,0.7) 100%)',
-                  borderColor: 'rgba(74,222,128,0.2)'
+                  background: 'linear-gradient(to bottom, rgba(6,78,59,0.6) 0%, rgba(6,60,40,0.8) 100%)',
+                  borderColor: 'rgba(74,222,128,0.35)',
+                  boxShadow: '0 0 15px rgba(74,222,128,0.1), inset 0 1px 0 rgba(255,255,255,0.04)'
                 }}
               >
-                <div className="absolute top-0 left-0 right-0 h-[1px] bg-emerald-400/20" />
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-emerald-400/30" />
+                <div className="absolute top-[2px] left-1 right-1 h-[1px] bg-emerald-400/10" />
+                <div className="absolute left-1 top-1 bottom-1 w-[1px] bg-emerald-400/10" />
+                <div className="absolute right-1 top-1 bottom-1 w-[1px] bg-emerald-400/10" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[6px] text-emerald-400/30 font-display uppercase tracking-[0.25em]">recycle</span>
+                  <Trash2 className="w-3.5 h-3.5 text-emerald-400/30 mr-1" />
+                  <span className="text-[8px] text-emerald-400/40 font-display uppercase tracking-[0.3em]">recycle</span>
                 </div>
               </div>
+              <div className="absolute -inset-1 bg-emerald-400/[0.06] rounded-lg blur-md -z-10" />
               {collected > 0 && (
-                <div className="absolute -inset-2 bg-emerald-400/[0.04] rounded-lg blur-lg -z-10" />
+                <div className="absolute -inset-3 bg-emerald-400/[0.05] rounded-xl blur-xl -z-10" />
               )}
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Active power-up badge */}
         <AnimatePresence>
