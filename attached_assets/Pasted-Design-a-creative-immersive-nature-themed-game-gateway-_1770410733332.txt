@@ -1,0 +1,249 @@
+Design a creative, immersive, nature-themed game gateway website using HTML and Tailwind CSS.
+The website must feel like a living natural world, not a traditional webpage — as if the player is entering nature itself.
+
+The game title is Earth Keeper.
+
+🌱 CORE CONCEPT
+
+The player is a guardian of nature.
+Before entering the game world, they arrive at a calm, cinematic gateway where they:
+
+See the world
+
+Read the story
+
+View controls
+
+Have a player profile stored in Firebase Realtime Database
+
+The experience should feel peaceful, meaningful, and alive.
+
+🎨 VISUAL IDENTITY – LIVING NATURE (ENHANCED)
+Inspiration
+
+Forests breathing with light
+
+Wind flowing through leaves
+
+Sun rays breaking through trees
+
+Earth, balance, life, and harmony
+
+Color System
+
+Primary: Deep forest green
+
+Secondary: Moss green, olive, soft bark brown
+
+Accent: Warm sunlight gold
+
+Highlights: Sky mist blue
+
+Visual Language
+
+Layered gradients (organic, soft)
+
+Subtle fog, light rays, floating pollen particles
+
+Soft blur and glow effects
+
+Rounded, organic shapes (NO sharp edges)
+
+Depth illusion using overlays and gradient masks
+
+Everything should feel natural, calm, and sacred.
+
+🌍 HOME PAGE – index.html (GAME GATEWAY)
+HERO SECTION (100vh – MOST IMPORTANT)
+
+Background
+
+Cinematic nature scene (forest / mountains / abstract organic gradients)
+
+Light rays, mist, and depth overlays
+
+Subtle animated feeling (visual illusion only, no heavy JS)
+
+Centered Content
+
+Large title:
+EARTH KEEPER
+
+Elegant, epic, natural typography
+
+Subtitle:
+“Nature chose you.”
+“Protect the balance. Restore the land.”
+
+🌿 MAIN ACTION BUTTONS (DOMINANT)
+
+Two large centered buttons that feel like ritual portals:
+
+🌱 Enter the World
+
+Primary button
+
+Glowing green edge
+
+Soft pulse or hover lift
+
+Feels like stepping into nature
+
+📖 The Story
+
+Secondary button
+
+Softer tone
+
+Elegant natural border
+
+Buttons must dominate visually.
+
+🧍 PLAYER PROFILE (NEW – REQUIRED)
+
+Add a Player Profile section connected to Firebase Realtime Database.
+
+Purpose
+
+Store player nickname
+
+Track first visit
+
+Prepare for leaderboard integration
+
+Behavior
+
+On first visit:
+
+Ask player to enter a nickname
+
+Save it to Firebase Realtime Database
+
+On return:
+
+Greet the player by name
+
+Example: “Welcome back, Earth Keeper.”
+
+Firebase Setup (INCLUDE THIS)
+
+Use Firebase Realtime Database with this configuration:
+
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDIM05oDJTecjmTFN48s2JfigZ6SAuuSpw",
+  authDomain: "wysi-game.firebaseapp.com",
+  databaseURL: "https://wysi-game-default-rtdb.firebaseio.com",
+  projectId: "wysi-game",
+  storageBucket: "wysi-game.firebasestorage.app",
+  messagingSenderId: "305557246327",
+  appId: "1:305557246327:web:f41243a2d91511dbd65172",
+  measurementId: "G-RB1PHPWLBP"
+};
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+
+Use simple JavaScript only, no frameworks.
+
+🧭 NAVIGATION (MINIMAL & NATURAL)
+
+Floating or glass-like navigation bar:
+
+Home
+
+Controls
+
+Leaderboard
+
+Story
+
+Style:
+
+Semi-transparent
+
+Blur effect
+
+Gentle hover animations
+
+🎮 CONTROLS SECTION (NEW – REQUIRED)
+
+Present controls as nature-inspired cards:
+
+Stone, leaf, or wood-style panels
+
+Soft shadows and organic edges
+
+Controls Content
+
+Move Left / Right: Arrow keys or A / D
+
+Action: Automatic (continuous eco-energy / cleaning action)
+
+Goal: Clean pollution and protect nature
+
+Icons should use:
+
+Leaves
+
+Wind
+
+Water
+
+Paths
+
+🏆 LEADERBOARD SECTION
+
+Style it like:
+
+Ancient forest records
+
+Carved wood or stone tablets
+
+Tone:
+
+Calm
+
+Respectful
+
+Timeless
+
+📖 STORY PAGE – story.html
+HERO BANNER
+
+Calm nature visuals
+
+Fog, light, silence
+
+Title
+
+“The Beginning”
+
+Story Tone
+
+Mythical
+
+Calm
+
+Purpose-driven
+
+Narrative
+
+The player is:
+
+A guardian
+
+A chosen soul
+
+A protector bound to nature
+
+Layout
+
+Spacious
+
+Easy to read
+
+Soft dividers and gradients
