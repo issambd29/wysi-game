@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, Wind, Sparkles, Trophy, X, Shield, Zap, Clock } from "lucide-react";
+import { Leaf, Wind, Sparkles, Trophy, X, Shield, Zap, Clock, Droplets, Trash2, Package, Cpu, FlaskRound, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
@@ -333,27 +333,40 @@ export function Game({ onExit, nickname }: GameProps) {
           </AnimatePresence>
         </div>
 
-        {/* Pollution */}
-        {pollution.map((p) => (
-          <motion.div
-            key={p.id}
-            style={{ 
-              left: `${p.x}%`, 
-              top: `${p.y}%`,
-              rotate: `${p.rotation}deg`
-            }}
-            className="absolute -translate-x-1/2 -translate-y-1/2"
-          >
-            <div className={`relative ${p.isToxic ? "scale-125" : "scale-100"}`}>
-              <div className={`w-10 h-10 rounded-full blur-md ${p.isToxic ? "bg-destructive/60" : "bg-orange-900/40"}`} />
-              <div className="absolute inset-0 flex items-center justify-center text-white/80">
-                {p.type === "barrel" ? <Shield className="w-5 h-5 text-destructive rotate-180" /> : <Wind className="w-5 h-5" />}
+        {/* Garbage Fall */}
+        {pollution.map((p) => {
+          const garbageConfig: Record<string, { icon: typeof Trash2; color: string; bg: string }> = {
+            bottle: { icon: FlaskRound, color: "text-blue-300", bg: "bg-blue-500/30" },
+            bag: { icon: ShoppingBag, color: "text-yellow-200", bg: "bg-yellow-600/30" },
+            can: { icon: Package, color: "text-gray-300", bg: "bg-gray-500/30" },
+            barrel: { icon: Trash2, color: "text-red-400", bg: "bg-red-600/40" },
+            oil: { icon: Droplets, color: "text-purple-300", bg: "bg-purple-600/30" },
+            ewaste: { icon: Cpu, color: "text-green-300", bg: "bg-emerald-600/30" },
+          };
+          const config = garbageConfig[p.type] || garbageConfig.bottle;
+          const Icon = config.icon;
+          return (
+            <div
+              key={p.id}
+              style={{ 
+                left: `${p.x}%`, 
+                top: `${p.y}%`,
+                transform: `translate(-50%, -50%) rotate(${p.rotation}deg)`
+              }}
+              className="absolute"
+            >
+              <div className={`relative ${p.isToxic ? "scale-[1.3]" : "scale-100"}`}>
+                <div className={`w-10 h-10 rounded-md ${config.bg} flex items-center justify-center border ${p.isToxic ? "border-destructive/50 shadow-[0_0_12px_rgba(220,38,38,0.4)]" : "border-white/10"}`}>
+                  <Icon className={`w-5 h-5 ${p.isToxic ? "text-destructive" : config.color}`} />
+                </div>
+                {p.isToxic && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full animate-ping opacity-60" />
+                )}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-[2px] h-6 bg-gradient-to-b from-white/15 to-transparent" />
               </div>
-              {/* Falling trail effect */}
-              <div className="absolute top-full left-1/2 -translate-x-1/2 w-1 h-8 bg-gradient-to-b from-white/10 to-transparent blur-[1px]" />
             </div>
-          </motion.div>
-        ))}
+          );
+        })}
 
         {/* Projectiles */}
         {projectiles.map((p) => (
