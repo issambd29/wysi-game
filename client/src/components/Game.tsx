@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu } from "lucide-react";
+import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 import { cn } from "@/lib/utils";
 
 interface GameObject {
@@ -29,6 +28,14 @@ interface PowerUp {
   type: "shield" | "beam" | "slow" | "seed";
 }
 
+interface ScorePopup {
+  id: number;
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+}
+
 interface GameProps {
   onExit: () => void;
   nickname: string;
@@ -43,160 +50,304 @@ const GARBAGE_CONFIG: Record<string, { icon: typeof Trash2; label: string; iconC
   ewaste: { icon: Cpu, label: "E-waste", iconColor: "text-teal-300", color: "bg-teal-800/50 border-teal-500/40", toxicColor: "bg-red-900/50 border-red-500/50" },
 };
 
+const LEVEL_NAMES = [
+  "Seedling",
+  "Sapling",
+  "Young Oak",
+  "Forest Warden",
+  "Grove Keeper",
+  "Ancient Guardian",
+  "Spirit of the Wild",
+  "Primordial Force",
+  "World Tree",
+  "Gaia's Chosen",
+];
+
+const LEVEL_THRESHOLDS = [0, 300, 750, 1500, 2500, 4000, 6000, 8500, 12000, 16000];
+
 export function Game({ onExit, nickname }: GameProps) {
   const [score, setScore] = useState(0);
   const [health, setHealth] = useState(100);
   const [level, setLevel] = useState(1);
   const [time, setTime] = useState(0);
   const [gameOver, setGameOver] = useState(false);
-  
+  const [paused, setPaused] = useState(false);
+
   const [playerPosition, setPlayerPosition] = useState(50);
   const [pollution, setPollution] = useState<GameObject[]>([]);
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
   const [powerUps, setPowerUps] = useState<PowerUp[]>([]);
-  
+
   const [activePowerUp, setActivePowerUp] = useState<string | null>(null);
   const [powerUpTimer, setPowerUpTimer] = useState(0);
   const [showSeedBurst, setShowSeedBurst] = useState(false);
   const [collected, setCollected] = useState(0);
+  const [destroyed, setDestroyed] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [maxCombo, setMaxCombo] = useState(0);
+  const [scorePopups, setScorePopups] = useState<ScorePopup[]>([]);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [bgOffset, setBgOffset] = useState(0);
 
   const gameLoopRef = useRef<number>();
   const lastShotRef = useRef<number>(0);
   const lastSpawnRef = useRef<number>(0);
   const lastPowerUpRef = useRef<number>(0);
+  const comboTimerRef = useRef<number>(0);
+  const keysRef = useRef<Set<string>>(new Set());
+  const pausedRef = useRef(false);
+  const scoreRef = useRef(0);
+  const levelRef = useRef(1);
+  const healthRef = useRef(100);
+  const gameOverRef = useRef(false);
+  const playerPosRef = useRef(50);
+  const activePowerUpRef = useRef<string | null>(null);
+  const comboRef = useRef(0);
+  const popupIdRef = useRef(0);
 
   const PLAYER_Y = 85;
   const SHOT_SPEED = 2;
   const CONTAINER_Y = 95;
   const CONTAINER_WIDTH = 12;
-  const POLLUTION_TYPES = ["bottle", "bag", "can", "barrel", "oil", "ewaste"];
+  const POLLUTION_TYPES: GameObject["type"][] = ["bottle", "bag", "can", "barrel", "oil", "ewaste"];
+  const COMBO_TIMEOUT = 2000;
+
+  scoreRef.current = score;
+  levelRef.current = level;
+  healthRef.current = health;
+  gameOverRef.current = gameOver;
+  playerPosRef.current = playerPosition;
+  activePowerUpRef.current = activePowerUp;
+  comboRef.current = combo;
+  pausedRef.current = paused;
+
+  const addPopup = useCallback((x: number, y: number, text: string, color: string) => {
+    const id = ++popupIdRef.current;
+    setScorePopups(prev => [...prev.slice(-8), { id, x, y, text, color }]);
+    setTimeout(() => setScorePopups(prev => prev.filter(p => p.id !== id)), 1200);
+  }, []);
+
+  const incrementCombo = useCallback(() => {
+    setCombo(c => {
+      const newCombo = c + 1;
+      setMaxCombo(m => Math.max(m, newCombo));
+      return newCombo;
+    });
+    comboTimerRef.current = Date.now();
+  }, []);
+
+  const getComboMultiplier = useCallback(() => {
+    if (comboRef.current >= 20) return 4;
+    if (comboRef.current >= 10) return 3;
+    if (comboRef.current >= 5) return 2;
+    return 1;
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (gameOver) return;
-      if (e.key === "ArrowLeft" || e.key === "a") setPlayerPosition(p => Math.max(5, p - 5));
-      if (e.key === "ArrowRight" || e.key === "d") setPlayerPosition(p => Math.min(95, p + 5));
+      if (e.key === "Escape") {
+        if (gameOverRef.current) return;
+        keysRef.current.clear();
+        setPaused(p => !p);
+        return;
+      }
+      if (gameOverRef.current || pausedRef.current) return;
+      keysRef.current.add(e.key.toLowerCase());
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysRef.current.delete(e.key.toLowerCase());
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [gameOver]);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
 
   useEffect(() => {
-    const tick = (timestamp: number) => {
-      if (gameOver) return;
+    let lastTimestamp = 0;
 
-      setTime(t => t + 1/60);
-      
-      const shotCooldown = activePowerUp === "beam" ? 150 : 300;
+    const tick = (timestamp: number) => {
+      if (gameOverRef.current) return;
+      if (pausedRef.current) {
+        gameLoopRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      const delta = lastTimestamp ? Math.min(timestamp - lastTimestamp, 50) : 16;
+      lastTimestamp = timestamp;
+      const dtScale = delta / 16.667;
+
+      setBgOffset(prev => prev + 0.02 * dtScale);
+      setTime(t => t + delta / 1000);
+
+      const keys = keysRef.current;
+      if (keys.has("arrowleft") || keys.has("a")) {
+        setPlayerPosition(p => {
+          const next = Math.max(5, p - 3 * dtScale);
+          playerPosRef.current = next;
+          return next;
+        });
+      }
+      if (keys.has("arrowright") || keys.has("d")) {
+        setPlayerPosition(p => {
+          const next = Math.min(95, p + 3 * dtScale);
+          playerPosRef.current = next;
+          return next;
+        });
+      }
+
+      if (Date.now() - comboTimerRef.current > COMBO_TIMEOUT && comboRef.current > 0) {
+        setCombo(0);
+      }
+
+      const shotCooldown = activePowerUpRef.current === "beam" ? 150 : 300;
       if (timestamp - lastShotRef.current > shotCooldown) {
-        setProjectiles(prev => [...prev, { id: Date.now(), x: playerPosition, y: PLAYER_Y }]);
+        setProjectiles(prev => [...prev, { id: Date.now() + Math.random(), x: playerPosRef.current, y: PLAYER_Y }]);
         lastShotRef.current = timestamp;
       }
 
-      const spawnRate = Math.max(300, 2000 - (level * 300));
+      const currentLevel = levelRef.current;
+      const spawnRate = Math.max(400, 2000 - (currentLevel * 250));
       if (timestamp - lastSpawnRef.current > spawnRate) {
-        const type = POLLUTION_TYPES[Math.floor(Math.random() * POLLUTION_TYPES.length)] as any;
-        const isToxic = Math.random() > 0.8 - (level * 0.05);
+        const type = POLLUTION_TYPES[Math.floor(Math.random() * POLLUTION_TYPES.length)];
+        const toxicChance = Math.min(0.6, 0.15 + (currentLevel * 0.05));
+        const isToxic = Math.random() < toxicChance;
+        const baseSpeed = 0.12 + Math.random() * 0.2;
+        const levelMultiplier = 1 + currentLevel * 0.12;
+        const slowFactor = activePowerUpRef.current === "slow" ? 0.4 : 1;
+
         setPollution(prev => [...prev, {
-          id: Date.now(),
-          x: Math.random() * 90 + 5,
-          y: -10,
+          id: Date.now() + Math.random(),
+          x: Math.random() * 85 + 7.5,
+          y: -5,
           type,
-          speed: (0.15 + Math.random() * 0.25) * (activePowerUp === "slow" ? 0.4 : 1) * (1 + level * 0.15),
+          speed: baseSpeed * levelMultiplier * slowFactor,
           isToxic,
           rotation: Math.random() * 360,
-          rotationSpeed: (Math.random() - 0.5) * 3
+          rotationSpeed: (Math.random() - 0.5) * 4
         }]);
         lastSpawnRef.current = timestamp;
       }
 
-      if (timestamp - lastPowerUpRef.current > 15000) {
-        const types: ("shield" | "beam" | "slow" | "seed")[] = ["shield", "beam", "slow", "seed"];
+      if (timestamp - lastPowerUpRef.current > 12000) {
+        const types: PowerUp["type"][] = ["shield", "beam", "slow", "seed"];
         setPowerUps(prev => [...prev, {
-          id: Date.now(),
-          x: Math.random() * 90 + 5,
-          y: -10,
+          id: Date.now() + Math.random(),
+          x: Math.random() * 85 + 7.5,
+          y: -5,
           type: types[Math.floor(Math.random() * types.length)]
         }]);
         lastPowerUpRef.current = timestamp;
       }
 
-      setProjectiles(prev => prev.map(p => ({ ...p, y: p.y - SHOT_SPEED })).filter(p => p.y > -5));
-      
+      setProjectiles(prev => prev.map(p => ({ ...p, y: p.y - SHOT_SPEED * dtScale })).filter(p => p.y > -5));
+
       setPollution(prev => {
-        let newHealth = health;
-        const remaining = prev.filter(p => {
-          const newY = p.y + p.speed;
+        let hDelta = 0;
+        const remaining: GameObject[] = [];
+
+        for (const p of prev) {
+          const newY = p.y + p.speed * dtScale;
           if (newY > CONTAINER_Y) {
-            const inContainer = Math.abs(p.x - playerPosition) < CONTAINER_WIDTH;
+            const inContainer = Math.abs(p.x - playerPosRef.current) < CONTAINER_WIDTH;
             if (inContainer) {
+              const mult = getComboMultiplier();
+              const pts = (p.isToxic ? 25 : 15) * mult;
               setCollected(c => c + 1);
-              setScore(s => s + (p.isToxic ? 25 : 15));
-              setHealth(h => Math.min(100, h + 3));
+              setScore(s => s + pts);
+              hDelta += 3;
+              incrementCombo();
+              addPopup(p.x, CONTAINER_Y - 5, `+${pts}`, "text-primary");
             } else {
-              if (activePowerUp !== "shield") {
-                newHealth -= p.isToxic ? 15 : 5;
+              if (activePowerUpRef.current !== "shield") {
+                const dmg = p.isToxic ? 15 : 5;
+                hDelta -= dmg;
               }
+              setCombo(0);
             }
-            return false;
+          } else {
+            remaining.push({ ...p, y: newY, rotation: p.rotation + p.rotationSpeed * dtScale });
           }
-          return true;
-        }).map(p => ({ 
-          ...p, 
-          y: p.y + p.speed,
-          rotation: p.rotation + p.rotationSpeed
-        }));
-        
-        if (newHealth <= 0 && !gameOver) {
-          setGameOver(true);
-          setHealth(0);
-        } else {
-          setHealth(newHealth);
+        }
+
+        if (hDelta !== 0) {
+          setHealth(h => {
+            const next = Math.max(0, Math.min(100, h + hDelta));
+            if (next <= 0) {
+              setGameOver(true);
+              gameOverRef.current = true;
+            }
+            return next;
+          });
         }
         return remaining;
       });
 
-      setPowerUps(prev => prev.map(p => ({ ...p, y: p.y + 0.2 })).filter(p => p.y < 105));
+      setPowerUps(prev => prev.map(p => ({ ...p, y: p.y + 0.2 * dtScale })).filter(p => p.y < 105));
 
       setProjectiles(prevProj => {
-        const nextProj = prevProj.filter((proj) => {
-          let hit = false;
-          setPollution(prevPol => {
-            const hitPolIdx = prevPol.findIndex(pol => 
+        const consumed = new Set<number>();
+        setPollution(prevPol => {
+          const nextPol = [...prevPol];
+          for (const proj of prevProj) {
+            const hitIdx = nextPol.findIndex(pol =>
               Math.abs(pol.x - proj.x) < 5 && Math.abs(pol.y - proj.y) < 5
             );
-            if (hitPolIdx !== -1) {
-              hit = true;
-              setScore(s => s + 10);
+            if (hitIdx !== -1) {
+              consumed.add(proj.id);
+              const hitPol = nextPol[hitIdx];
+              const mult = getComboMultiplier();
+              const pts = 10 * mult;
+              setScore(s => s + pts);
               setHealth(h => Math.min(100, h + 1));
-              return prevPol.filter((_, i) => i !== hitPolIdx);
+              setDestroyed(d => d + 1);
+              incrementCombo();
+              addPopup(hitPol.x, hitPol.y, `+${pts}`, "text-accent");
+              nextPol.splice(hitIdx, 1);
             }
-            return prevPol;
-          });
-          return !hit;
+          }
+          return nextPol;
         });
-        return nextProj;
+        return prevProj.filter(p => !consumed.has(p.id));
       });
 
       setPowerUps(prev => {
-        const found = prev.find(p => Math.abs(p.x - playerPosition) < 5 && Math.abs(p.y - PLAYER_Y) < 5);
+        const found = prev.find(p => Math.abs(p.x - playerPosRef.current) < 6 && Math.abs(p.y - PLAYER_Y) < 6);
         if (found) {
           if (found.type === "seed") {
             setPollution([]);
             setScore(s => s + 100);
             setHealth(h => Math.min(100, h + 20));
             setShowSeedBurst(true);
+            addPopup(50, 50, "+100 SEED BURST", "text-primary");
             setTimeout(() => setShowSeedBurst(false), 1000);
           } else {
             setActivePowerUp(found.type);
+            activePowerUpRef.current = found.type;
             setPowerUpTimer(10);
+            addPopup(found.x, found.y, found.type.toUpperCase(), "text-accent");
           }
           return prev.filter(p => p.id !== found.id);
         }
         return prev;
       });
 
-      setLevel(Math.floor(score / 500) + 1);
+      const currentScore = scoreRef.current;
+      let newLevel = 1;
+      for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+        if (currentScore >= LEVEL_THRESHOLDS[i]) {
+          newLevel = i + 1;
+          break;
+        }
+      }
+      if (newLevel > levelRef.current) {
+        setLevel(newLevel);
+        levelRef.current = newLevel;
+        setShowLevelUp(true);
+        setTimeout(() => setShowLevelUp(false), 2500);
+      }
 
       gameLoopRef.current = requestAnimationFrame(tick);
     };
@@ -205,16 +356,24 @@ export function Game({ onExit, nickname }: GameProps) {
     return () => {
       if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
     };
-  }, [playerPosition, health, gameOver, score, level, activePowerUp]);
+  }, [addPopup, incrementCombo, getComboMultiplier]);
 
   useEffect(() => {
+    if (paused || gameOver) return;
     if (powerUpTimer > 0) {
-      const timer = setInterval(() => setPowerUpTimer(t => t - 1), 1000);
+      const timer = setInterval(() => {
+        setPowerUpTimer(t => {
+          if (t <= 1) {
+            setActivePowerUp(null);
+            activePowerUpRef.current = null;
+            return 0;
+          }
+          return t - 1;
+        });
+      }, 1000);
       return () => clearInterval(timer);
-    } else {
-      setActivePowerUp(null);
     }
-  }, [powerUpTimer]);
+  }, [powerUpTimer, paused, gameOver]);
 
   const resetGame = () => {
     setScore(0);
@@ -222,196 +381,296 @@ export function Game({ onExit, nickname }: GameProps) {
     setTime(0);
     setLevel(1);
     setGameOver(false);
+    setPaused(false);
     setPollution([]);
     setProjectiles([]);
     setPowerUps([]);
     setActivePowerUp(null);
     setCollected(0);
+    setDestroyed(0);
+    setCombo(0);
+    setMaxCombo(0);
+    setScorePopups([]);
+    setPowerUpTimer(0);
+    scoreRef.current = 0;
+    levelRef.current = 1;
+    healthRef.current = 100;
+    gameOverRef.current = false;
+    playerPosRef.current = 50;
+    activePowerUpRef.current = null;
+    comboRef.current = 0;
+    setPlayerPosition(50);
   };
 
   const healthPct = health / 100;
+  const levelName = LEVEL_NAMES[Math.min(level - 1, LEVEL_NAMES.length - 1)];
+  const nextThreshold = LEVEL_THRESHOLDS[Math.min(level, LEVEL_THRESHOLDS.length - 1)];
+  const prevThreshold = LEVEL_THRESHOLDS[Math.min(level - 1, LEVEL_THRESHOLDS.length - 1)];
+  const levelProgress = nextThreshold > prevThreshold ? ((score - prevThreshold) / (nextThreshold - prevThreshold)) * 100 : 100;
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-3xl flex flex-col items-center justify-center p-4 overflow-hidden"
+      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-4 overflow-hidden"
     >
       {/* HUD */}
-      <div className="absolute top-8 left-8 right-8 flex flex-wrap justify-between items-center z-10 font-display gap-4">
-        <div className="flex items-center gap-6 flex-wrap">
+      <div className="absolute top-4 left-4 right-4 flex flex-wrap justify-between items-start z-10 font-display gap-3">
+        <div className="flex items-center gap-4 flex-wrap">
           <div className="text-left">
-            <p className="text-white/40 text-[10px] tracking-[0.3em] uppercase mb-1">Guardian</p>
-            <p className="text-white text-xl tracking-widest">{nickname}</p>
+            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Guardian</p>
+            <p className="text-white text-base tracking-widest">{nickname}</p>
           </div>
           <div className="h-8 w-px bg-white/10" />
           <div className="text-left">
-            <p className="text-white/40 text-[10px] tracking-[0.3em] uppercase mb-1">Nature Health</p>
-            <div className="flex items-center gap-3">
-              <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
-                <div 
-                  className={cn(
-                    "h-full transition-all duration-500",
-                    health < 30 ? "bg-destructive" : "bg-primary"
-                  )}
+            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Nature Health</p>
+            <div className="flex items-center gap-2">
+              <div className="w-28 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className={cn("h-full transition-all duration-500", health < 30 ? "bg-destructive" : "bg-primary")}
                   style={{ width: `${health}%` }}
                 />
               </div>
-              <span className={cn("text-sm", health < 30 ? "text-destructive" : "text-primary")}>{health}%</span>
+              <span className={cn("text-xs tabular-nums", health < 30 ? "text-destructive" : "text-primary")} data-testid="text-health">{health}%</span>
+            </div>
+          </div>
+          <div className="h-8 w-px bg-white/10" />
+          <div className="text-left">
+            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Level {level} — {levelName}</p>
+            <div className="flex items-center gap-2">
+              <div className="w-20 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-accent/70 transition-all duration-300" style={{ width: `${Math.min(100, levelProgress)}%` }} />
+              </div>
+              <span className="text-[9px] text-white/30 tabular-nums">{score}/{nextThreshold}</span>
             </div>
           </div>
         </div>
-        
-        <div className="flex items-center gap-8 flex-wrap">
+
+        <div className="flex items-center gap-6 flex-wrap">
+          {combo >= 3 && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-accent/10 border border-accent/20 rounded-full">
+              <Star className="w-3 h-3 text-accent" />
+              <span className="text-accent text-xs font-bold tabular-nums" data-testid="text-combo">{combo}x</span>
+              {getComboMultiplier() > 1 && (
+                <span className="text-accent/60 text-[9px]">({getComboMultiplier()}x pts)</span>
+              )}
+            </div>
+          )}
           <div className="text-center">
-            <p className="text-white/40 text-[10px] tracking-[0.3em] uppercase mb-1">Score</p>
-            <p className="text-accent text-3xl" data-testid="text-score">{score}</p>
+            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Score</p>
+            <p className="text-accent text-2xl tabular-nums" data-testid="text-score">{score}</p>
           </div>
           <div className="text-center">
-            <p className="text-white/40 text-[10px] tracking-[0.3em] uppercase mb-1">Collected</p>
-            <p className="text-primary text-3xl" data-testid="text-collected">{collected}</p>
+            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Collected</p>
+            <p className="text-primary text-2xl tabular-nums" data-testid="text-collected">{collected}</p>
           </div>
           <div className="text-center">
-            <p className="text-white/40 text-[10px] tracking-[0.3em] uppercase mb-1">Level</p>
-            <p className="text-white text-3xl" data-testid="text-level">{level}</p>
+            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Destroyed</p>
+            <p className="text-orange-400 text-2xl tabular-nums" data-testid="text-destroyed">{destroyed}</p>
           </div>
-          <Button variant="ghost" size="icon" onClick={onExit} className="rounded-full ml-2" data-testid="button-exit-game">
-            <X className="w-6 h-6 text-white" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={() => setPaused(p => !p)} className="rounded-full" data-testid="button-pause-game">
+              {paused ? <Play className="w-5 h-5 text-white" /> : <Pause className="w-5 h-5 text-white" />}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onExit} className="rounded-full" data-testid="button-exit-game">
+              <X className="w-5 h-5 text-white" />
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Game Stage */}
-      <div className="relative w-full max-w-5xl aspect-video rounded-[2rem] border border-white/10 overflow-hidden shadow-[0_0_100px_-20px_rgba(0,0,0,0.5)]">
-        
+      <div className="relative w-full max-w-5xl aspect-video rounded-2xl border border-white/5 overflow-hidden shadow-[0_0_80px_-20px_rgba(0,0,0,0.8)]">
+
         {/* Nature Background */}
         <div className="absolute inset-0">
-          {/* Sky gradient - shifts based on health */}
-          <div 
+          {/* Sky */}
+          <div
             className="absolute inset-0 transition-all duration-2000"
             style={{
               background: health > 60
                 ? `linear-gradient(to bottom, 
-                    hsl(200, 60%, ${12 + healthPct * 8}%) 0%, 
-                    hsl(180, 40%, ${10 + healthPct * 6}%) 40%, 
-                    hsl(140, 50%, ${8 + healthPct * 10}%) 100%)`
+                    hsl(210, 50%, ${10 + healthPct * 10}%) 0%, 
+                    hsl(190, 35%, ${8 + healthPct * 8}%) 30%, 
+                    hsl(150, 45%, ${6 + healthPct * 12}%) 70%,
+                    hsl(130, 40%, ${5 + healthPct * 8}%) 100%)`
                 : health > 30
                 ? `linear-gradient(to bottom,
-                    hsl(30, 30%, 12%) 0%,
-                    hsl(20, 20%, 10%) 40%,
-                    hsl(100, 20%, 10%) 100%)`
+                    hsl(35, 25%, 10%) 0%,
+                    hsl(25, 18%, 8%) 30%,
+                    hsl(45, 15%, 7%) 70%,
+                    hsl(80, 12%, 6%) 100%)`
                 : `linear-gradient(to bottom,
-                    hsl(0, 20%, 10%) 0%,
-                    hsl(0, 15%, 8%) 40%,
-                    hsl(0, 10%, 6%) 100%)`
+                    hsl(0, 18%, 8%) 0%,
+                    hsl(350, 12%, 6%) 30%,
+                    hsl(340, 8%, 5%) 70%,
+                    hsl(0, 6%, 4%) 100%)`
             }}
           />
 
-          {/* Stars/particles in sky */}
-          {[...Array(20)].map((_, i) => (
-            <div 
+          {/* Stars */}
+          {[...Array(30)].map((_, i) => (
+            <div
               key={`star-${i}`}
-              className="absolute w-[2px] h-[2px] bg-white/20 rounded-full animate-pulse"
-              style={{ 
-                left: `${(i * 17 + 3) % 100}%`, 
-                top: `${(i * 7 + 2) % 40}%`,
-                animationDelay: `${i * 0.3}s`
+              className="absolute rounded-full animate-pulse"
+              style={{
+                left: `${(i * 13 + 7) % 100}%`,
+                top: `${(i * 11 + 3) % 35}%`,
+                width: `${i % 3 === 0 ? 2 : 1}px`,
+                height: `${i % 3 === 0 ? 2 : 1}px`,
+                backgroundColor: `rgba(255,255,255,${0.1 + (i % 4) * 0.05})`,
+                animationDelay: `${i * 0.2}s`,
+                animationDuration: `${2 + (i % 3)}s`
               }}
             />
           ))}
 
-          {/* Mountains - far */}
-          <div className="absolute bottom-[30%] left-0 right-0 flex items-end justify-center pointer-events-none">
-            <Mountain className={cn("w-32 h-20 transition-colors duration-1000", health > 50 ? "text-emerald-900/40" : "text-zinc-800/40")} />
-            <Mountain className={cn("w-48 h-28 -ml-8 transition-colors duration-1000", health > 50 ? "text-emerald-900/50" : "text-zinc-800/50")} />
-            <Mountain className={cn("w-40 h-24 -ml-12 transition-colors duration-1000", health > 50 ? "text-emerald-900/35" : "text-zinc-800/35")} />
-            <Mountain className={cn("w-36 h-20 -ml-6 transition-colors duration-1000", health > 50 ? "text-emerald-900/45" : "text-zinc-800/45")} />
+          {/* Moving clouds */}
+          {health > 40 && [...Array(3)].map((_, i) => (
+            <div
+              key={`cloud-${i}`}
+              className="absolute rounded-full transition-colors duration-2000"
+              style={{
+                left: `${((bgOffset * (0.3 + i * 0.1) * 50 + i * 35) % 130) - 15}%`,
+                top: `${8 + i * 8}%`,
+                width: `${80 + i * 30}px`,
+                height: `${12 + i * 4}px`,
+                background: health > 60
+                  ? `radial-gradient(ellipse, rgba(255,255,255,${0.03 + i * 0.01}) 0%, transparent 70%)`
+                  : `radial-gradient(ellipse, rgba(200,180,150,${0.02}) 0%, transparent 70%)`,
+              }}
+            />
+          ))}
+
+          {/* Far mountains */}
+          <div className="absolute bottom-[30%] left-0 right-0 pointer-events-none" style={{ transform: `translateX(${Math.sin(bgOffset * 0.1) * 2}px)` }}>
+            <div className="flex items-end justify-center">
+              {[
+                { w: 140, h: 80, ml: 0 },
+                { w: 200, h: 110, ml: -30 },
+                { w: 160, h: 95, ml: -40 },
+                { w: 180, h: 85, ml: -20 },
+                { w: 130, h: 70, ml: -25 },
+              ].map((m, i) => (
+                <Mountain
+                  key={`mtn-${i}`}
+                  className={cn("transition-colors duration-1000", health > 50 ? "text-emerald-900/40" : health > 25 ? "text-amber-900/30" : "text-zinc-800/30")}
+                  style={{ width: `${m.w}px`, height: `${m.h}px`, marginLeft: `${m.ml}px` }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Near mountains */}
+          <div className="absolute bottom-[20%] left-0 right-0 pointer-events-none" style={{ transform: `translateX(${Math.sin(bgOffset * 0.15) * 3}px)` }}>
+            <div className="flex items-end justify-around px-4">
+              {[0, 1, 2].map(i => (
+                <Mountain
+                  key={`near-mtn-${i}`}
+                  className={cn("transition-colors duration-1000", health > 50 ? "text-emerald-800/50" : health > 25 ? "text-amber-800/30" : "text-zinc-700/35")}
+                  style={{ width: `${100 + i * 20}px`, height: `${50 + i * 15}px` }}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Trees */}
-          <div className="absolute bottom-[15%] left-0 right-0 flex items-end justify-around pointer-events-none px-4">
-            {[...Array(7)].map((_, i) => (
-              <TreePine 
+          <div className="absolute bottom-[12%] left-0 right-0 flex items-end justify-around pointer-events-none px-2" style={{ transform: `translateX(${Math.sin(bgOffset * 0.2) * 4}px)` }}>
+            {[...Array(9)].map((_, i) => (
+              <TreePine
                 key={`tree-${i}`}
                 className={cn(
                   "transition-all duration-1000",
-                  health > 50 ? "text-emerald-800/60" : health > 25 ? "text-yellow-900/40" : "text-zinc-800/30"
+                  health > 50 ? "text-emerald-800/60" : health > 25 ? "text-yellow-900/35" : "text-zinc-800/25"
                 )}
-                style={{ 
-                  width: `${24 + (i % 3) * 8}px`, 
-                  height: `${32 + (i % 3) * 12}px`,
-                  transform: `translateX(${(i % 2 === 0 ? -1 : 1) * (i * 3)}px)`
+                style={{
+                  width: `${18 + (i % 4) * 6}px`,
+                  height: `${28 + (i % 4) * 10}px`,
+                  transform: `translateX(${(i % 2 === 0 ? -1 : 1) * (i * 2)}px)`
                 }}
               />
             ))}
           </div>
 
-          {/* Flowers at ground level */}
-          <div className="absolute bottom-[10%] left-0 right-0 flex items-end justify-around pointer-events-none px-8">
-            {health > 40 && [...Array(5)].map((_, i) => (
-              <Flower2
-                key={`flower-${i}`}
-                className="text-primary/20 animate-pulse"
-                style={{ 
-                  width: "12px", 
-                  height: "12px",
-                  animationDelay: `${i * 0.5}s`
-                }}
-              />
-            ))}
-          </div>
+          {/* Flowers */}
+          {health > 40 && (
+            <div className="absolute bottom-[9%] left-0 right-0 flex items-end justify-around pointer-events-none px-12">
+              {[...Array(6)].map((_, i) => (
+                <Flower2
+                  key={`flower-${i}`}
+                  className="text-primary/15 animate-pulse"
+                  style={{ width: "10px", height: "10px", animationDelay: `${i * 0.4}s` }}
+                />
+              ))}
+            </div>
+          )}
 
-          {/* Ground / grass */}
-          <div 
-            className="absolute bottom-0 left-0 right-0 h-[12%] transition-colors duration-1000"
+          {/* Ground */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-[10%] transition-colors duration-1000"
             style={{
               background: health > 50
-                ? 'linear-gradient(to bottom, hsl(120, 40%, 12%) 0%, hsl(100, 30%, 8%) 100%)'
+                ? 'linear-gradient(to bottom, hsl(130, 35%, 10%) 0%, hsl(110, 25%, 7%) 100%)'
                 : health > 25
-                ? 'linear-gradient(to bottom, hsl(60, 20%, 10%) 0%, hsl(40, 15%, 7%) 100%)'
-                : 'linear-gradient(to bottom, hsl(0, 10%, 10%) 0%, hsl(0, 8%, 6%) 100%)'
+                ? 'linear-gradient(to bottom, hsl(50, 15%, 8%) 0%, hsl(40, 10%, 6%) 100%)'
+                : 'linear-gradient(to bottom, hsl(0, 8%, 8%) 0%, hsl(0, 5%, 5%) 100%)'
             }}
           />
 
-          {/* Light rays when healthy */}
-          {health > 60 && (
+          {/* Light rays */}
+          {health > 55 && (
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              {[...Array(3)].map((_, i) => (
+              {[...Array(4)].map((_, i) => (
                 <div
                   key={`ray-${i}`}
-                  className="absolute top-0 bg-gradient-to-b from-yellow-200/5 to-transparent"
+                  className="absolute top-0 bg-gradient-to-b from-yellow-200/4 to-transparent"
                   style={{
-                    left: `${20 + i * 25}%`,
-                    width: '60px',
-                    height: '60%',
-                    transform: `rotate(${-5 + i * 5}deg)`,
-                    transformOrigin: 'top center'
+                    left: `${15 + i * 20}%`,
+                    width: '50px',
+                    height: '55%',
+                    transform: `rotate(${-8 + i * 5 + Math.sin(bgOffset * 0.3 + i) * 2}deg)`,
+                    transformOrigin: 'top center',
+                    opacity: 0.6 + Math.sin(bgOffset * 0.5 + i * 2) * 0.3
                   }}
                 />
               ))}
             </div>
           )}
+
+          {/* Fireflies */}
+          {health > 30 && [...Array(5)].map((_, i) => (
+            <motion.div
+              key={`firefly-${i}`}
+              animate={{
+                x: [0, 20, -10, 15, 0],
+                y: [0, -15, 10, -5, 0],
+                opacity: [0, 0.6, 0.3, 0.7, 0]
+              }}
+              transition={{ repeat: Infinity, duration: 6 + i * 2, ease: "easeInOut", delay: i * 1.5 }}
+              className="absolute w-1 h-1 bg-yellow-300/40 rounded-full shadow-[0_0_4px_rgba(250,220,50,0.3)]"
+              style={{ left: `${15 + i * 18}%`, top: `${40 + (i % 3) * 15}%` }}
+            />
+          ))}
         </div>
 
-        {/* Pollution Machine (Top) */}
-        <div className="absolute top-0 left-0 right-0 h-6 flex justify-around items-start z-10">
+        {/* Pollution Machines */}
+        <div className="absolute top-0 left-0 right-0 h-5 flex justify-around items-start z-10">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="w-14 h-8 bg-zinc-900/80 border-x border-b border-zinc-600/30 rounded-b-lg flex flex-col items-center">
-              <div className="w-8 h-1 bg-zinc-700/60 mt-1" />
-              <div className="flex gap-1 mt-1">
-                <div className="w-2 h-2 bg-red-500/30 rounded-full animate-pulse" />
-                <div className="w-2 h-2 bg-orange-500/20 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+            <div key={i} className="w-12 h-6 bg-zinc-900/80 border-x border-b border-zinc-700/20 rounded-b flex flex-col items-center pt-0.5">
+              <div className="w-6 h-[2px] bg-zinc-700/40" />
+              <div className="flex gap-0.5 mt-0.5">
+                <div className="w-1.5 h-1.5 bg-red-500/25 rounded-full animate-pulse" />
+                <div className="w-1.5 h-1.5 bg-orange-500/15 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
               </div>
-              <div className="w-6 h-[2px] bg-red-900/20 mt-1 blur-[1px]" />
             </div>
           ))}
         </div>
 
-        {/* Health damage overlay */}
-        <div className={`absolute inset-0 pointer-events-none transition-colors duration-1000 z-[5] ${health < 30 ? "bg-red-900/15" : "bg-transparent"}`} />
+        {/* Damage overlay */}
+        <div className={cn("absolute inset-0 pointer-events-none transition-all duration-1000 z-[5]", health < 25 ? "bg-red-900/15 shadow-[inset_0_0_60px_rgba(200,0,0,0.1)]" : "")} />
 
-        {/* Seed Burst Effect */}
+        {/* Seed Burst */}
         <AnimatePresence>
           {showSeedBurst && (
             <motion.div
@@ -420,10 +679,33 @@ export function Game({ onExit, nickname }: GameProps) {
               exit={{ opacity: 0 }}
               className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
             >
-              <div className="w-full h-full bg-primary/20 rounded-full blur-3xl animate-ping" />
+              <div className="w-full h-full bg-primary/15 rounded-full blur-3xl animate-ping" />
               <div className="absolute flex flex-col items-center">
-                <Sparkles className="w-20 h-20 text-primary mb-4" />
-                <span className="text-primary font-display text-4xl tracking-tighter">SEED BURST</span>
+                <Sparkles className="w-16 h-16 text-primary mb-2" />
+                <span className="text-primary font-display text-3xl tracking-tighter">SEED BURST</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Level Up Announcement */}
+        <AnimatePresence>
+          {showLevelUp && (
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ type: "spring", stiffness: 200 }}
+              className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+            >
+              <div className="flex flex-col items-center gap-1 px-8 py-4 bg-accent/10 border border-accent/30 backdrop-blur-xl rounded-2xl">
+                <div className="flex items-center gap-2">
+                  <ChevronUp className="w-5 h-5 text-accent" />
+                  <span className="text-accent font-display text-lg tracking-[0.3em] uppercase">Level Up</span>
+                  <ChevronUp className="w-5 h-5 text-accent" />
+                </div>
+                <span className="text-white font-display text-2xl tracking-tight">{levelName}</span>
+                <span className="text-white/40 text-[10px] tracking-widest uppercase">Level {level}</span>
               </div>
             </motion.div>
           )}
@@ -431,42 +713,59 @@ export function Game({ onExit, nickname }: GameProps) {
 
         {/* Floating leaves */}
         <div className="absolute inset-0 pointer-events-none">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(3)].map((_, i) => (
             <motion.div
               key={`leaf-${i}`}
               initial={{ opacity: 0, y: "100%" }}
-              animate={{ opacity: [0, 0.15, 0], y: "-100%", x: ["0%", (i % 2 === 0 ? "40%" : "-40%"), "0%"] }}
-              transition={{ repeat: Infinity, duration: 18 + i * 4, ease: "linear", delay: i * 3 }}
-              className="absolute text-primary/10 select-none"
-              style={{ left: `${10 + i * 22}%` }}
+              animate={{ opacity: [0, 0.1, 0], y: "-100%", x: ["0%", (i % 2 === 0 ? "30%" : "-30%"), "0%"] }}
+              transition={{ repeat: Infinity, duration: 20 + i * 5, ease: "linear", delay: i * 4 }}
+              className="absolute text-primary/8 select-none"
+              style={{ left: `${15 + i * 25}%` }}
             >
-              <Leaf className="w-8 h-8 rotate-45" />
+              <Leaf className="w-6 h-6 rotate-45" />
             </motion.div>
           ))}
         </div>
 
-        {/* Garbage Fall */}
+        {/* Score Popups */}
+        <AnimatePresence>
+          {scorePopups.map(p => (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 1, y: 0, scale: 1 }}
+              animate={{ opacity: 0, y: -30, scale: 1.2 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1 }}
+              className={`absolute z-30 font-display text-sm font-bold pointer-events-none ${p.color}`}
+              style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)' }}
+            >
+              {p.text}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        {/* Garbage */}
         {pollution.map((p) => {
           const config = GARBAGE_CONFIG[p.type] || GARBAGE_CONFIG.bottle;
           const Icon = config.icon;
           return (
             <div
               key={p.id}
-              style={{ 
-                left: `${p.x}%`, 
+              style={{
+                left: `${p.x}%`,
                 top: `${p.y}%`,
                 transform: `translate(-50%, -50%) rotate(${p.rotation}deg)`
               }}
               className="absolute z-[6]"
             >
-              <div className={`relative ${p.isToxic ? "scale-[1.2]" : "scale-100"}`}>
-                <div className={`w-9 h-9 rounded-md flex items-center justify-center border ${p.isToxic ? config.toxicColor : config.color}`}>
-                  <Icon className={`w-5 h-5 ${p.isToxic ? "text-red-400" : config.iconColor}`} />
+              <div className={`relative ${p.isToxic ? "scale-110" : ""}`}>
+                <div className={`w-8 h-8 rounded-md flex items-center justify-center border ${p.isToxic ? config.toxicColor : config.color}`}>
+                  <Icon className={`w-4 h-4 ${p.isToxic ? "text-red-400" : config.iconColor}`} />
                 </div>
                 {p.isToxic && (
-                  <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping opacity-50" />
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping opacity-40" />
                 )}
-                <div className="absolute top-full left-1/2 -translate-x-1/2 w-[2px] h-5 bg-gradient-to-b from-white/10 to-transparent" />
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-[1px] h-4 bg-gradient-to-b from-white/8 to-transparent" />
               </div>
             </div>
           );
@@ -477,11 +776,11 @@ export function Game({ onExit, nickname }: GameProps) {
           <div
             key={p.id}
             style={{ left: `${p.x}%`, top: `${p.y}%` }}
-            className="absolute w-1.5 h-5 bg-accent rounded-full shadow-[0_0_12px_rgba(251,191,36,0.6)] z-[6]"
+            className="absolute w-1 h-4 bg-accent rounded-full shadow-[0_0_8px_rgba(251,191,36,0.5)] z-[6]"
           />
         ))}
 
-        {/* PowerUps */}
+        {/* Power-Ups */}
         {powerUps.map((p) => (
           <motion.div
             key={p.id}
@@ -491,104 +790,150 @@ export function Game({ onExit, nickname }: GameProps) {
             style={{ left: `${p.x}%`, top: `${p.y}%` }}
             className="absolute -translate-x-1/2 -translate-y-1/2 z-[7]"
           >
-            <div className="w-8 h-8 bg-accent/20 rounded-lg border border-accent/50 flex items-center justify-center backdrop-blur-sm">
-              {p.type === "shield" && <Shield className="w-4 h-4 text-accent" />}
-              {p.type === "beam" && <Zap className="w-4 h-4 text-accent" />}
-              {p.type === "slow" && <Clock className="w-4 h-4 text-accent" />}
-              {p.type === "seed" && <Leaf className="w-4 h-4 text-accent" />}
+            <div className="w-7 h-7 bg-accent/15 rounded-lg border border-accent/40 flex items-center justify-center backdrop-blur-sm">
+              {p.type === "shield" && <Shield className="w-3.5 h-3.5 text-accent" />}
+              {p.type === "beam" && <Zap className="w-3.5 h-3.5 text-accent" />}
+              {p.type === "slow" && <Clock className="w-3.5 h-3.5 text-accent" />}
+              {p.type === "seed" && <Leaf className="w-3.5 h-3.5 text-accent" />}
             </div>
           </motion.div>
         ))}
 
-        {/* Garbage Container + Player */}
+        {/* Player + Container */}
         <motion.div
           animate={{ x: `${playerPosition}%` }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          transition={{ type: "spring", stiffness: 400, damping: 35 }}
           className="absolute bottom-0 left-0 -translate-x-1/2 z-[8]"
         >
           <div className="relative flex flex-col items-center">
-            {/* Guardian (shooter) */}
-            <div className="relative mb-1">
+            <div className="relative mb-0.5">
               {activePowerUp === "shield" && (
-                <motion.div 
-                  animate={{ scale: [1, 1.1, 1] }} 
-                  transition={{ repeat: Infinity, duration: 2 }}
-                  className="absolute -inset-6 rounded-full border-2 border-accent/30 bg-accent/5 blur-sm" 
+                <motion.div
+                  animate={{ scale: [1, 1.08, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="absolute -inset-5 rounded-full border border-accent/25 bg-accent/5"
                 />
               )}
-              
-              <div className="w-12 h-12 bg-primary/50 rounded-xl backdrop-blur-md border border-primary/60 flex items-center justify-center relative z-10 shadow-lg shadow-primary/30">
-                <Leaf className="w-6 h-6 text-primary animate-pulse" />
+              <div className="w-10 h-10 bg-primary/40 rounded-lg backdrop-blur-md border border-primary/50 flex items-center justify-center relative z-10 shadow-lg shadow-primary/20">
+                <Leaf className="w-5 h-5 text-primary animate-pulse" />
               </div>
             </div>
-
-            {/* Garbage Container */}
-            <div className="relative w-20 h-8" data-testid="garbage-container">
-              <div className="absolute inset-0 bg-emerald-900/70 border-2 border-emerald-600/50 rounded-b-lg rounded-t-sm overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500/30" />
+            <div className="relative w-16 h-6" data-testid="garbage-container">
+              <div className="absolute inset-0 bg-emerald-900/60 border border-emerald-600/40 rounded-b rounded-t-sm overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-emerald-500/25" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[9px] text-emerald-300/50 font-display uppercase tracking-widest">recycle</span>
+                  <span className="text-[7px] text-emerald-300/40 font-display uppercase tracking-widest">recycle</span>
                 </div>
               </div>
-              {/* Container glow when collecting */}
               {collected > 0 && (
-                <div className="absolute -inset-1 bg-primary/10 rounded-lg blur-md -z-10" />
+                <div className="absolute -inset-1 bg-primary/8 rounded-lg blur-md -z-10" />
               )}
             </div>
           </div>
         </motion.div>
 
-        {/* Power-up HUD Overlay */}
+        {/* Active Power-up indicator */}
         <AnimatePresence>
           {activePowerUp && (
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 15 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="absolute right-4 bottom-4 bg-accent/10 border border-accent/20 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 text-accent font-display text-xs z-10"
+              exit={{ opacity: 0, x: 15 }}
+              className="absolute right-3 bottom-3 bg-accent/8 border border-accent/15 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1.5 text-accent font-display text-[10px] z-10"
             >
-              {activePowerUp === "shield" && <Shield className="w-3.5 h-3.5" />}
-              {activePowerUp === "beam" && <Zap className="w-3.5 h-3.5" />}
-              {activePowerUp === "slow" && <Clock className="w-3.5 h-3.5" />}
+              {activePowerUp === "shield" && <Shield className="w-3 h-3" />}
+              {activePowerUp === "beam" && <Zap className="w-3 h-3" />}
+              {activePowerUp === "slow" && <Clock className="w-3 h-3" />}
               <span className="uppercase tracking-widest">{activePowerUp}</span>
-              <span className="w-px h-3 bg-accent/30" />
-              <span>{powerUpTimer}s</span>
+              <span className="w-px h-2.5 bg-accent/20" />
+              <span className="tabular-nums">{powerUpTimer}s</span>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Game Over Screen */}
+        {/* Pause Overlay */}
+        <AnimatePresence>
+          {paused && !gameOver && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-30 bg-black/60 backdrop-blur-lg flex flex-col items-center justify-center"
+            >
+              <Pause className="w-12 h-12 text-white/30 mb-4" />
+              <h2 className="text-4xl font-display text-white mb-2 tracking-[0.3em] uppercase">Paused</h2>
+              <p className="text-white/40 font-body text-sm mb-8">The forest waits for your return</p>
+              <div className="grid grid-cols-3 gap-6 mb-8 text-center">
+                <div>
+                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Score</p>
+                  <p className="text-white text-2xl font-display tabular-nums">{score}</p>
+                </div>
+                <div>
+                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Level</p>
+                  <p className="text-accent text-2xl font-display">{level}</p>
+                </div>
+                <div>
+                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Time</p>
+                  <p className="text-white text-2xl font-display tabular-nums">{Math.floor(time)}s</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button onClick={() => setPaused(false)} className="px-6 rounded-full bg-primary/80 text-white font-display tracking-widest" data-testid="button-resume-game">
+                  <Play className="w-4 h-4 mr-2" />
+                  RESUME
+                </Button>
+                <Button variant="outline" onClick={onExit} className="px-6 rounded-full border-white/15 text-white/70 font-display tracking-widest" data-testid="button-quit-game">
+                  LEAVE REALM
+                </Button>
+              </div>
+              <p className="text-white/20 text-[9px] tracking-widest uppercase mt-6">Press ESC to resume</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Game Over */}
         <AnimatePresence>
           {gameOver && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="absolute inset-0 z-20 bg-black/70 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center"
+              className="absolute inset-0 z-20 bg-black/75 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center"
             >
-              <Trophy className="w-16 h-16 text-accent mb-6" />
-              <h2 className="text-5xl font-display text-white mb-2 tracking-tighter">SURVIVAL ENDED</h2>
-              <p className="text-white/60 font-body mb-8 max-w-md">Nature does not fight back. It waits for someone to protect it.</p>
-              
-              <div className="grid grid-cols-3 gap-6 mb-12">
+              <Trophy className="w-14 h-14 text-accent mb-4" />
+              <h2 className="text-4xl font-display text-white mb-1 tracking-tighter">SURVIVAL ENDED</h2>
+              <p className="text-white/50 font-body text-sm mb-6 max-w-sm">Nature does not fight back. It waits for someone to protect it.</p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
                 <div>
-                  <p className="text-white/40 text-[10px] tracking-[0.3em] uppercase mb-1">Final Score</p>
-                  <p className="text-white text-3xl font-display">{score}</p>
+                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Final Score</p>
+                  <p className="text-white text-2xl font-display tabular-nums">{score}</p>
                 </div>
                 <div>
-                  <p className="text-white/40 text-[10px] tracking-[0.3em] uppercase mb-1">Collected</p>
-                  <p className="text-primary text-3xl font-display">{collected}</p>
+                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Collected</p>
+                  <p className="text-primary text-2xl font-display tabular-nums">{collected}</p>
                 </div>
                 <div>
-                  <p className="text-white/40 text-[10px] tracking-[0.3em] uppercase mb-1">Time Survived</p>
-                  <p className="text-white text-3xl font-display">{Math.floor(time)}s</p>
+                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Destroyed</p>
+                  <p className="text-orange-400 text-2xl font-display tabular-nums">{destroyed}</p>
+                </div>
+                <div>
+                  <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase mb-1">Best Combo</p>
+                  <p className="text-accent text-2xl font-display tabular-nums">{maxCombo}x</p>
                 </div>
               </div>
+              <div className="flex items-center gap-2 mb-6 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+                <span className="text-white/40 text-[10px] tracking-widest uppercase">Level {level}</span>
+                <span className="text-white/20">-</span>
+                <span className="text-accent font-display text-sm">{levelName}</span>
+                <span className="text-white/20">-</span>
+                <span className="text-white/40 text-[10px] tabular-nums">{Math.floor(time)}s survived</span>
+              </div>
 
-              <div className="flex gap-4">
-                <Button onClick={resetGame} className="px-8 rounded-full bg-primary text-white font-display tracking-widest" data-testid="button-restart-game">
+              <div className="flex gap-3">
+                <Button onClick={resetGame} className="px-6 rounded-full bg-primary text-white font-display tracking-widest" data-testid="button-restart-game">
                   REBIND SPIRIT
                 </Button>
-                <Button variant="outline" onClick={onExit} className="px-8 rounded-full border-white/20 text-white font-display tracking-widest" data-testid="button-leave-game">
+                <Button variant="outline" onClick={onExit} className="px-6 rounded-full border-white/15 text-white font-display tracking-widest" data-testid="button-leave-game">
                   LEAVE REALM
                 </Button>
               </div>
@@ -597,18 +942,18 @@ export function Game({ onExit, nickname }: GameProps) {
         </AnimatePresence>
       </div>
 
-      <div className="mt-6 flex items-center gap-8 text-white/30 font-display text-[10px] tracking-[0.4em] uppercase flex-wrap justify-center">
-        <div className="flex items-center gap-2">
-          <kbd className="px-2 py-1 bg-white/5 border border-white/10 rounded text-[9px]">A / D</kbd>
+      {/* Controls hint */}
+      <div className="mt-4 flex items-center gap-6 text-white/20 font-display text-[9px] tracking-[0.4em] uppercase flex-wrap justify-center">
+        <div className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[8px]">A / D</kbd>
           <span>move</span>
         </div>
-        <div className="flex items-center gap-2">
-          <kbd className="px-2 py-1 bg-white/5 border border-white/10 rounded text-[9px]">AUTO</kbd>
-          <span>eco-beams</span>
+        <div className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[8px]">ESC</kbd>
+          <span>pause</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-primary/60">Container catches garbage for bonus</span>
-        </div>
+        <span className="text-primary/40">catch garbage in container for bonus</span>
+        <span className="text-accent/40">chain hits for combo multiplier</span>
       </div>
     </motion.div>
   );
