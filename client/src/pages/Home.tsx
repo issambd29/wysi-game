@@ -1,27 +1,33 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useGameProfile } from "@/hooks/use-game-profile";
 import { ProfileModal } from "@/components/ProfileModal";
+import { Game } from "@/components/Game";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Home() {
   const { profile, loading, createProfile } = useGameProfile();
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const handleEnterWorld = () => {
     if (!profile) {
       setShowProfileModal(true);
     } else {
-      // Simulate entering game - for now just refresh or alert
-      // In a real app this would route to /game or launch a canvas
-      window.location.href = "/story";
+      setIsPlaying(true);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative px-4 text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center relative px-4 text-center overflow-hidden">
+      <AnimatePresence>
+        {isPlaying && profile && (
+          <Game nickname={profile.nickname} onExit={() => setIsPlaying(false)} />
+        )}
+      </AnimatePresence>
+
       <ProfileModal 
         isOpen={showProfileModal} 
         onClose={() => setShowProfileModal(false)}
@@ -52,11 +58,19 @@ export default function Home() {
         {/* User Greeting if logged in */}
         {!loading && profile && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-white/60 font-sans text-sm tracking-widest uppercase"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center gap-2"
           >
-            Welcome back, Keeper <span className="text-primary font-bold">{profile.nickname}</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm rounded-full border border-white/10">
+              <Sparkles className="w-4 h-4 text-accent animate-pulse" />
+              <span className="text-white/60 font-sans text-xs tracking-[0.3em] uppercase">
+                Welcome back, Earth Keeper
+              </span>
+              <span className="text-primary font-bold tracking-widest uppercase text-sm">
+                {profile.nickname}
+              </span>
+            </div>
           </motion.div>
         )}
 
