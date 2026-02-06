@@ -83,16 +83,17 @@ export function Game({ onExit, nickname }: GameProps) {
       }
 
       // Spawn Pollution
-      const spawnRate = Math.max(500, 2000 - (level * 200));
+      const spawnRate = Math.max(300, 2000 - (level * 300));
       if (timestamp - lastSpawnRef.current > spawnRate) {
         const type = POLLUTION_TYPES[Math.floor(Math.random() * POLLUTION_TYPES.length)] as any;
+        const isToxic = Math.random() > 0.8 - (level * 0.05);
         setPollution(prev => [...prev, {
           id: Date.now(),
           x: Math.random() * 90 + 5,
           y: -10,
           type,
-          speed: (0.2 + Math.random() * 0.3) * (activePowerUp === "slow" ? 0.5 : 1) * (1 + level * 0.1),
-          isToxic: Math.random() > 0.8
+          speed: (0.15 + Math.random() * 0.25) * (activePowerUp === "slow" ? 0.4 : 1) * (1 + level * 0.15),
+          isToxic
         }]);
         lastSpawnRef.current = timestamp;
       }
@@ -258,13 +259,6 @@ export function Game({ onExit, nickname }: GameProps) {
       </div>
 
       {/* Game Stage */}
-      <div className="relative w-full max-w-5xl aspect-video bg-gradient-to-b from-black/40 to-primary/5 rounded-[2rem] border border-white/10 overflow-hidden shadow-[0_0_100px_-20px_rgba(0,0,0,0.5)]">
-        
-        {/* Background Elements */}
-        <div className="absolute inset-0 opacity-20 pointer-events-none">
-          <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-primary/40 to-transparent" />
-        </div>
-
         {/* Seed Burst Effect */}
         <AnimatePresence>
           {showSeedBurst && (
@@ -272,7 +266,7 @@ export function Game({ onExit, nickname }: GameProps) {
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 2 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+              className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
             >
               <div className="w-full h-full bg-primary/20 rounded-full blur-3xl animate-ping" />
               <div className="absolute flex flex-col items-center">
@@ -282,6 +276,43 @@ export function Game({ onExit, nickname }: GameProps) {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <div className={`absolute inset-0 pointer-events-none transition-colors duration-1000 ${health < 30 ? "bg-red-900/10" : "bg-transparent"}`} />
+        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-500 bg-gradient-to-b from-black/40 to-primary/5 ${activePowerUp ? "opacity-40" : "opacity-100"}`} />
+        
+        {/* Ambient Nature Elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          <AnimatePresence>
+            {[...Array(5)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: "100%" }}
+                animate={{ opacity: [0, 0.2, 0], y: "-100%", x: ["0%", (i % 2 === 0 ? "50%" : "-50%"), "0%"] }}
+                transition={{ repeat: Infinity, duration: 15 + i * 5, ease: "linear", delay: i * 2 }}
+                className="absolute text-primary/10 select-none"
+                style={{ left: `${i * 20}%` }}
+              >
+                <Leaf className="w-12 h-12 rotate-45" />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {/* HUD Messages */}
+        <div className="absolute top-1/4 left-0 right-0 pointer-events-none text-center">
+          <AnimatePresence>
+            {level > 1 && time % 30 < 5 && (
+              <motion.p
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 0.2, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-white/20 font-display text-4xl uppercase tracking-[1em]"
+              >
+                Nature persists
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Pollution */}
         {pollution.map((p) => (
@@ -380,7 +411,7 @@ export function Game({ onExit, nickname }: GameProps) {
             >
               <Trophy className="w-16 h-16 text-accent mb-6" />
               <h2 className="text-5xl font-display text-white mb-2 tracking-tighter">SURVIVAL ENDED</h2>
-              <p className="text-white/60 font-body mb-8 max-w-md">Nature has succumbed to the weight of pollution. Your legacy as a guardian remains in the soil.</p>
+              <p className="text-white/60 font-body mb-8 max-w-md">Nature does not fight back. It waits for someone to protect it.</p>
               
               <div className="grid grid-cols-2 gap-8 mb-12">
                 <div>
