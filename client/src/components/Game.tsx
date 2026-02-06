@@ -259,6 +259,17 @@ export function Game({ onExit, nickname }: GameProps) {
       </div>
 
       {/* Game Stage */}
+      <div className="relative w-full max-w-5xl aspect-video bg-gradient-to-b from-black/40 to-primary/5 rounded-[2rem] border border-white/10 overflow-hidden shadow-[0_0_100px_-20px_rgba(0,0,0,0.5)]">
+        {/* Pollution Machine (Top) */}
+        <div className="absolute top-0 left-0 right-0 h-4 flex justify-around items-start z-10">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="w-12 h-6 bg-white/5 border-x border-b border-white/10 rounded-b-xl flex flex-col items-center">
+              <div className="w-2 h-2 bg-destructive/20 rounded-full animate-pulse mt-1" />
+              <div className="w-4 h-1 bg-white/10 mt-1 blur-[2px]" />
+            </div>
+          ))}
+        </div>
+
         {/* Seed Burst Effect */}
         <AnimatePresence>
           {showSeedBurst && (
@@ -364,7 +375,13 @@ export function Game({ onExit, nickname }: GameProps) {
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="absolute bottom-10 left-0 -translate-x-1/2"
         >
-          <div className="relative">
+          <div className="relative group">
+            {/* Guardian Machine Visuals */}
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-4">
+              <div className="w-1 h-4 bg-primary/40 rounded-full animate-bounce" />
+              <div className="w-1 h-4 bg-primary/40 rounded-full animate-bounce delay-100" />
+            </div>
+
             {/* Shield Visual */}
             {activePowerUp === "shield" && (
               <motion.div 
@@ -374,8 +391,12 @@ export function Game({ onExit, nickname }: GameProps) {
               />
             )}
             
-            <div className="w-16 h-16 bg-primary/40 rounded-2xl backdrop-blur-md border border-primary/60 flex items-center justify-center relative z-10 shadow-lg shadow-primary/20">
-              <Leaf className="w-8 h-8 text-primary animate-pulse" />
+            <div className="w-16 h-16 bg-primary/40 rounded-2xl backdrop-blur-md border border-primary/60 flex flex-col items-center justify-center relative z-10 shadow-lg shadow-primary/20">
+              <Leaf className="w-8 h-8 text-primary animate-pulse mb-1" />
+              <div className="flex gap-1">
+                <div className="w-1 h-1 bg-accent/40 rounded-full animate-ping" />
+                <div className="w-1 h-1 bg-accent/40 rounded-full animate-ping delay-75" />
+              </div>
             </div>
             
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-12 h-2 bg-primary/40 blur-xl" />
