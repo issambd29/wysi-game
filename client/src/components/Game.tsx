@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, Star, Wind, Flame, Heart } from "lucide-react";
+import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, Star, Wind, Flame, Heart, Globe, RotateCcw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { Difficulty } from "./DifficultySelect";
 
 interface GameObject {
   id: number;
@@ -13,6 +14,7 @@ interface GameObject {
   isToxic: boolean;
   rotation: number;
   rotationSpeed: number;
+  windOffset: number;
 }
 
 interface Projectile {
@@ -46,6 +48,7 @@ interface HitParticle {
 interface GameProps {
   onExit: () => void;
   nickname: string;
+  difficulty: Difficulty;
 }
 
 const GARBAGE_CONFIG: Record<string, { icon: typeof Trash2; label: string; iconColor: string; bgGlow: string; color: string; toxicColor: string }> = {
@@ -58,13 +61,19 @@ const GARBAGE_CONFIG: Record<string, { icon: typeof Trash2; label: string; iconC
 };
 
 const LEVEL_NAMES = [
-  "Seedling", "Sapling", "Young Oak", "Forest Warden", "Grove Keeper",
-  "Ancient Guardian", "Spirit of the Wild", "Primordial Force", "World Tree", "Gaia's Chosen",
+  "Awakening", "Rising Pollution", "Toxic Storm", "Dark Currents", "Acid Rain",
+  "Smog Siege", "Chemical Tide", "Wasteland", "Last Stand", "Gaia's Chosen",
 ];
 
 const LEVEL_THRESHOLDS = [0, 300, 750, 1500, 2500, 4000, 6000, 8500, 12000, 16000];
 
-export function Game({ onExit, nickname }: GameProps) {
+const DIFFICULTY_CONFIG = {
+  easy: { speedMult: 0.65, spawnMult: 1.5, toxicBase: 0.08, toxicScale: 0.03, damageMult: 0.6, label: "Calm Nature", Icon: Leaf, color: "text-emerald-400" },
+  normal: { speedMult: 1.0, spawnMult: 1.0, toxicBase: 0.15, toxicScale: 0.05, damageMult: 1.0, label: "Balanced Earth", Icon: Globe, color: "text-sky-400" },
+  hard: { speedMult: 1.4, spawnMult: 0.6, toxicBase: 0.25, toxicScale: 0.07, damageMult: 1.4, label: "Nature in Crisis", Icon: Flame, color: "text-orange-400" },
+};
+
+export function Game({ onExit, nickname, difficulty }: GameProps) {
   const [score, setScore] = useState(0);
   const [health, setHealth] = useState(100);
   const [level, setLevel] = useState(1);
@@ -89,6 +98,10 @@ export function Game({ onExit, nickname }: GameProps) {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [bgOffset, setBgOffset] = useState(0);
   const [screenShake, setScreenShake] = useState(0);
+  const [windDirection, setWindDirection] = useState(0);
+
+  const diffConfig = DIFFICULTY_CONFIG[difficulty];
+  const DiffIcon = diffConfig.Icon;
 
   const gameLoopRef = useRef<number>();
   const lastShotRef = useRef<number>(0);
@@ -194,6 +207,7 @@ export function Game({ onExit, nickname }: GameProps) {
 
       setBgOffset(prev => prev + 0.02 * dtScale);
       setTime(t => t + delta / 1000);
+      setWindDirection(Math.sin(timestamp * 0.0008) * 0.15);
 
       const keys = keysRef.current;
       if (keys.has("arrowleft") || keys.has("a")) {
@@ -222,10 +236,11 @@ export function Game({ onExit, nickname }: GameProps) {
       }
 
       const currentLevel = levelRef.current;
-      const spawnRate = Math.max(400, 2000 - (currentLevel * 250));
+      const dc = DIFFICULTY_CONFIG[difficulty];
+      const spawnRate = Math.max(300, (2000 - (currentLevel * 250)) * dc.spawnMult);
       if (timestamp - lastSpawnRef.current > spawnRate) {
         const type = POLLUTION_TYPES[Math.floor(Math.random() * POLLUTION_TYPES.length)];
-        const toxicChance = Math.min(0.6, 0.15 + (currentLevel * 0.05));
+        const toxicChance = Math.min(0.7, dc.toxicBase + (currentLevel * dc.toxicScale));
         const isToxic = Math.random() < toxicChance;
         const baseSpeed = 0.12 + Math.random() * 0.2;
         const levelMultiplier = 1 + currentLevel * 0.12;
@@ -236,10 +251,11 @@ export function Game({ onExit, nickname }: GameProps) {
           x: Math.random() * 85 + 7.5,
           y: -5,
           type,
-          speed: baseSpeed * levelMultiplier * slowFactor,
+          speed: baseSpeed * levelMultiplier * slowFactor * dc.speedMult,
           isToxic,
           rotation: Math.random() * 360,
-          rotationSpeed: (Math.random() - 0.5) * 4
+          rotationSpeed: (Math.random() - 0.5) * 4,
+          windOffset: 0
         }]);
         lastSpawnRef.current = timestamp;
       }
@@ -257,14 +273,17 @@ export function Game({ onExit, nickname }: GameProps) {
 
       setProjectiles(prev => prev.map(p => ({ ...p, y: p.y - SHOT_SPEED * dtScale })).filter(p => p.y > -5));
 
+      const wind = Math.sin(timestamp * 0.0008) * 0.15;
       setPollution(prev => {
         let hDelta = 0;
         const remaining: GameObject[] = [];
 
         for (const p of prev) {
           const newY = p.y + p.speed * dtScale;
+          const newWindOffset = p.windOffset + wind * dtScale;
+          const effectiveX = Math.max(2, Math.min(98, p.x + newWindOffset * 0.3));
           if (newY > CONTAINER_Y) {
-            const inContainer = Math.abs(p.x - playerPosRef.current) < CONTAINER_WIDTH;
+            const inContainer = Math.abs(effectiveX - playerPosRef.current) < CONTAINER_WIDTH;
             if (inContainer) {
               const mult = getComboMultiplier();
               const pts = (p.isToxic ? 25 : 15) * mult;
@@ -272,18 +291,18 @@ export function Game({ onExit, nickname }: GameProps) {
               setScore(s => s + pts);
               hDelta += 3;
               incrementCombo();
-              addPopup(p.x, CONTAINER_Y - 5, `+${pts}`, "text-emerald-300");
-              addHitParticle(p.x, CONTAINER_Y - 3, "bg-emerald-400");
+              addPopup(effectiveX, CONTAINER_Y - 5, `+${pts}`, "text-emerald-300");
+              addHitParticle(effectiveX, CONTAINER_Y - 3, "bg-emerald-400");
             } else {
               if (activePowerUpRef.current !== "shield") {
-                const dmg = p.isToxic ? 15 : 5;
+                const dmg = Math.round((p.isToxic ? 15 : 5) * dc.damageMult);
                 hDelta -= dmg;
                 triggerShake();
               }
               setCombo(0);
             }
           } else {
-            remaining.push({ ...p, y: newY, rotation: p.rotation + p.rotationSpeed * dtScale });
+            remaining.push({ ...p, x: effectiveX, y: newY, rotation: p.rotation + p.rotationSpeed * dtScale, windOffset: newWindOffset });
           }
         }
 
@@ -475,6 +494,18 @@ export function Game({ onExit, nickname }: GameProps) {
               <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
                 <div className="h-full bg-amber-500/60 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, levelProgress)}%` }} />
               </div>
+            </div>
+
+            {/* Difficulty badge */}
+            <div className="px-2.5 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] flex items-center gap-1.5">
+              <DiffIcon className={`w-3 h-3 ${diffConfig.color}`} />
+              <span className={`text-[8px] tracking-[0.15em] uppercase font-display ${diffConfig.color}`} data-testid="text-difficulty">{diffConfig.label}</span>
+            </div>
+
+            {/* Wind indicator */}
+            <div className="px-2 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] flex items-center gap-1">
+              <Wind className="w-3 h-3 text-teal-400/60" style={{ transform: `scaleX(${windDirection > 0 ? 1 : -1})` }} />
+              <span className="text-teal-400/40 text-[7px] font-display tracking-wider uppercase">Wind</span>
             </div>
           </div>
 
@@ -760,13 +791,14 @@ export function Game({ onExit, nickname }: GameProps) {
               transition={{ type: "spring", stiffness: 250, damping: 20 }}
               className="absolute top-14 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
             >
-              <div className="flex flex-col items-center gap-1 px-6 py-3 bg-black/50 backdrop-blur-xl rounded-xl border border-amber-400/20 shadow-[0_0_30px_rgba(250,190,50,0.1)]">
+              <div className="flex flex-col items-center gap-1 px-8 py-4 bg-black/50 backdrop-blur-xl rounded-xl border border-amber-400/20 shadow-[0_0_30px_rgba(250,190,50,0.1)]">
                 <div className="flex items-center gap-1.5">
                   <ChevronUp className="w-4 h-4 text-amber-400" />
-                  <span className="text-amber-400 font-display text-sm tracking-[0.3em] uppercase">Level Up</span>
+                  <span className="text-amber-400 font-display text-sm tracking-[0.3em] uppercase">Level {level}</span>
                   <ChevronUp className="w-4 h-4 text-amber-400" />
                 </div>
                 <span className="text-white font-display text-xl tracking-tight">{levelName}</span>
+                <span className="text-white/25 font-body text-[9px] mt-0.5">The pollution intensifies</span>
               </div>
             </motion.div>
           )}
@@ -845,7 +877,7 @@ export function Game({ onExit, nickname }: GameProps) {
           );
         })}
 
-        {/* Projectiles */}
+        {/* Projectiles - Green energy shots */}
         {projectiles.map((p) => (
           <div
             key={p.id}
@@ -853,9 +885,10 @@ export function Game({ onExit, nickname }: GameProps) {
             className="absolute z-[6]"
           >
             <div className="relative">
-              <div className="w-1 h-5 bg-gradient-to-b from-amber-200 to-amber-500 rounded-full" />
-              <div className="absolute inset-0 w-1 h-5 bg-amber-300 rounded-full blur-[3px] opacity-60" />
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[2px] h-2 bg-gradient-to-b from-amber-400/30 to-transparent" />
+              <div className="w-1.5 h-6 bg-gradient-to-b from-emerald-200 via-emerald-400 to-green-600 rounded-full" />
+              <div className="absolute inset-0 w-1.5 h-6 bg-emerald-300 rounded-full blur-[4px] opacity-50" />
+              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-emerald-300/40 rounded-full blur-[3px]" />
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[2px] h-3 bg-gradient-to-b from-emerald-400/25 to-transparent" />
             </div>
           </div>
         ))}
@@ -978,6 +1011,7 @@ export function Game({ onExit, nickname }: GameProps) {
                   {[
                     { label: "Score", value: score, color: "text-amber-300" },
                     { label: "Level", value: level, color: "text-emerald-300" },
+                    { label: "Difficulty", value: diffConfig.label, color: diffConfig.color },
                     { label: "Time", value: `${Math.floor(time)}s`, color: "text-white/70" },
                   ].map(s => (
                     <div key={s.label} className="px-4 py-2 bg-white/[0.03] rounded-lg border border-white/[0.04] text-center min-w-[70px]">
@@ -987,13 +1021,18 @@ export function Game({ onExit, nickname }: GameProps) {
                   ))}
                 </div>
 
-                <div className="flex gap-2">
-                  <Button onClick={() => setPaused(false)} className="px-5 rounded-lg bg-emerald-600/80 text-white font-display text-xs tracking-widest border border-emerald-500/30" data-testid="button-resume-game">
+                <div className="flex flex-col gap-2 w-full max-w-[220px]">
+                  <Button onClick={() => setPaused(false)} className="w-full rounded-lg bg-emerald-600/80 text-white font-display text-xs tracking-widest border border-emerald-500/30" data-testid="button-resume-game">
                     <Play className="w-3.5 h-3.5 mr-1.5" />
                     RESUME
                   </Button>
-                  <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-white/50 font-display text-xs tracking-widest border border-white/[0.06]" data-testid="button-quit-game">
-                    LEAVE
+                  <Button variant="ghost" onClick={resetGame} className="w-full rounded-lg text-white/60 font-display text-xs tracking-widest border border-white/[0.06]" data-testid="button-restart-level">
+                    <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                    RESTART LEVEL
+                  </Button>
+                  <Button variant="ghost" onClick={onExit} className="w-full rounded-lg text-white/40 font-display text-xs tracking-widest border border-white/[0.06]" data-testid="button-quit-game">
+                    <Home className="w-3.5 h-3.5 mr-1.5" />
+                    EXIT TO HOME
                   </Button>
                 </div>
                 <p className="text-white/15 text-[8px] tracking-[0.3em] uppercase mt-4 font-display">ESC to resume</p>
@@ -1046,12 +1085,16 @@ export function Game({ onExit, nickname }: GameProps) {
                   <span className="text-white/30 text-[9px] tabular-nums font-display">{Math.floor(time)}s</span>
                 </div>
 
+                <p className="text-white/20 font-body text-[10px] italic mb-5">"Nature gives you one chance. Protect it."</p>
+
                 <div className="flex gap-2">
                   <Button onClick={resetGame} className="px-5 rounded-lg bg-emerald-600/80 text-white font-display text-xs tracking-widest border border-emerald-500/30" data-testid="button-restart-game">
+                    <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                     TRY AGAIN
                   </Button>
                   <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-white/50 font-display text-xs tracking-widest border border-white/[0.06]" data-testid="button-leave-game">
-                    LEAVE
+                    <Home className="w-3.5 h-3.5 mr-1.5" />
+                    EXIT
                   </Button>
                 </div>
               </motion.div>

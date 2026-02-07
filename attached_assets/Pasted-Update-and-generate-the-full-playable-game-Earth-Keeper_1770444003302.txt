@@ -1,0 +1,188 @@
+Update and generate the full playable game Earth Keeper with the following features and improvements.
+This must be a real, functional game, not a mockup.
+
+📖 STORY INTRO (VIDEO REQUIRED)
+
+Add a short cinematic story video that plays before the game starts.
+
+Video content:
+
+Nature in balance (forests, rivers, animals)
+
+Pollution slowly appearing and falling from the sky
+
+Nature becoming weak and dark
+
+Final scene: the Earth Keeper awakens
+
+Style:
+
+Calm, emotional, cinematic
+
+Soft music and nature sounds
+
+At the end of the video, show a large glowing button:
+
+🌱 PLAY NOW
+
+Clicking this button must start the game immediately.
+
+🔥 FIRING SYSTEM (UPDATED)
+
+The player character (Earth Keeper) fires continuous eco-energy shots.
+
+Shots must:
+
+Spawn clearly from the center/top of the player character
+
+Visually look attached to the player (not random spawn)
+
+Fire style:
+
+Green energy beam, seeds, water pulses, or nature light
+
+Smooth firing animation
+
+Firing is automatic, no fire button.
+
+☔ GARBAGE RAIN (IMPROVED ICONS)
+
+Replace simple shapes with clear, polished garbage icons:
+
+Plastic bottles & bags (semi-transparent)
+
+Metal cans & scrap (shiny, reflective)
+
+Electronic waste (dark tech debris)
+
+Toxic barrels (glowing warning colors)
+
+Oil drops (liquid, spreading animation)
+
+Garbage must:
+
+Look dangerous and readable
+
+Have small rotation and falling animation
+
+Feel like a pollution storm
+
+⏸️ PAUSE SYSTEM (NEW)
+
+Add a Pause button (icon-based)
+
+Pause must:
+
+Stop gameplay
+
+Freeze falling garbage
+
+Freeze firing
+
+Show pause menu:
+
+Resume
+
+Restart Level
+
+Exit to Home
+
+🧩 LEVEL SYSTEM (NEW)
+
+Implement multiple levels with clear transitions.
+
+Each level introduces:
+
+New garbage types
+
+Faster falling speed
+
+More objects on screen
+
+Show:
+
+“Level 1 – Awakening”
+
+“Level 2 – Rising Pollution”
+
+“Level 3 – Toxic Storm”
+
+Smooth level-start animation or text.
+
+📈 DIFFICULTY MODES (NEW)
+
+Add difficulty selection before starting:
+
+🌿 Calm Nature (Easy)
+
+Slow garbage
+
+Fewer toxic items
+
+🌎 Balanced Earth (Normal)
+
+Moderate speed
+
+Mixed garbage
+
+🔥 Nature in Crisis (Hard)
+
+Fast garbage
+
+High toxic density
+
+Difficulty affects:
+
+Garbage speed
+
+Spawn rate
+
+Damage to Nature Health
+
+🎁 EXTRA GAME FEATURES (ADD AT LEAST ONE)
+
+Add one or more creative mechanics, for example:
+
+Combo system for cleaning garbage in a row
+
+Weather effects (wind pushing garbage)
+
+Special ultimate eco-power (screen clear)
+
+Day/Night visual shift per level
+
+📊 HUD (UPDATED)
+
+HUD must show:
+
+Nature Health Bar
+
+Score
+
+Current Level
+
+Difficulty Mode
+
+Pause icon
+
+HUD style:
+
+Organic
+
+Leaf-inspired
+
+Clean and readable
+
+🎯 GAME FEEL & MESSAGE
+
+The game must feel:
+
+Emotional
+
+Purpose-driven
+
+Alive
+
+Subtle message:
+
+“Nature gives you one chance. Protect it.”
