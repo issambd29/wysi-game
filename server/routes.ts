@@ -1,12 +1,7 @@
-import type { Express } from "express";
-import { createServer, type Server } from "http";
+import { createServer } from "http";
 import { storage } from "./storage";
 
-export async function registerRoutes(
-  httpServer: Server,
-  app: Express
-): Promise<Server> {
-  // Simple status check
+export async function registerRoutes(httpServer, app) {
   app.get('/api/status', (req, res) => {
     res.json({ status: 'ok' });
   });
