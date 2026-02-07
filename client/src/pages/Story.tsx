@@ -142,25 +142,33 @@ export default function Story() {
           transition={{ duration: 1.2 }}
           className="text-center mb-16"
         >
-          <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-5"
+          <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-6"
             style={{
-              background: "radial-gradient(circle, rgba(74,222,128,0.12) 0%, transparent 70%)",
-              boxShadow: "0 0 40px rgba(74,222,128,0.08)",
+              background: "radial-gradient(circle, rgba(74,222,128,0.15) 0%, transparent 70%)",
+              boxShadow: "0 0 50px rgba(74,222,128,0.1), 0 0 15px rgba(74,222,128,0.05)",
             }}
           >
-            <BookOpen className="w-7 h-7 text-emerald-400/70" />
+            <BookOpen className="w-7 h-7 text-emerald-400/60" />
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-display font-bold text-white/90 tracking-tight mb-4">
-            A Silent War
+          <p className="text-[10px] md:text-xs font-sans uppercase tracking-[0.5em] text-emerald-400/40 mb-4">
+            The Lore of Earth Keeper
+          </p>
+
+          <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight mb-3">
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/50">A Silent War</span>
           </h1>
-          <p className="text-lg md:text-xl font-display text-white/30 tracking-wide mb-6">
+          <p className="text-xl md:text-2xl font-display text-white/25 tracking-[0.15em] italic mb-8">
             for a Living Planet
           </p>
 
-          <div className="w-20 h-px mx-auto bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent mb-6" />
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="w-12 h-px bg-gradient-to-r from-transparent to-emerald-500/30" />
+            <Leaf className="w-3 h-3 text-emerald-500/30" />
+            <div className="w-12 h-px bg-gradient-to-l from-transparent to-emerald-500/30" />
+          </div>
 
-          <p className="text-white/35 font-display text-sm md:text-base leading-relaxed tracking-wide max-w-lg mx-auto">
+          <p className="text-white/30 font-body text-base md:text-lg leading-loose max-w-md mx-auto italic">
             Somewhere beyond the stars, a dying world turned its rage toward Earth.
             This is the story of how the planet chose its secret protector, and the silent war
             that no one was ever meant to see.
