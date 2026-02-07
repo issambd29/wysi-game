@@ -1,19 +1,84 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, ChevronLeft, ChevronRight, Star, Wind, Flame, Heart, Globe, RotateCcw, Home, Crown, TreeDeciduous, Volume2, VolumeX } from "lucide-react";
+import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, ChevronLeft, ChevronRight, Star, Wind, Flame, Heart, Globe, RotateCcw, Home, Crown, TreeDeciduous, Volume2, VolumeX, Skull, Beer, Fuel, Battery, Biohazard, Bomb, AlertTriangle, CircleOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Skull } from "lucide-react";
 import { MalakarQuiz } from "./MalakarQuiz";
 import { GameSounds, startAmbient, stopAmbient, speakVillain, stopVillainSpeech } from "@/lib/sounds";
 
 const GARBAGE_CONFIG = {
-  bottle: { icon: FlaskRound, label: "Plastic", iconColor: "text-sky-200", bgGlow: "shadow-sky-500/20", color: "bg-sky-950/60 border-sky-400/30", toxicColor: "bg-red-950/70 border-red-400/40" },
-  bag: { icon: ShoppingBag, label: "Bag", iconColor: "text-amber-200", bgGlow: "shadow-amber-500/20", color: "bg-amber-950/60 border-amber-400/30", toxicColor: "bg-red-950/70 border-red-400/40" },
-  can: { icon: Package, label: "Can", iconColor: "text-zinc-200", bgGlow: "shadow-zinc-400/20", color: "bg-zinc-800/60 border-zinc-400/30", toxicColor: "bg-red-950/70 border-red-400/40" },
-  barrel: { icon: Trash2, label: "Toxic", iconColor: "text-orange-200", bgGlow: "shadow-orange-500/20", color: "bg-orange-950/60 border-orange-400/30", toxicColor: "bg-red-950/70 border-red-400/40" },
-  oil: { icon: Droplets, label: "Oil", iconColor: "text-violet-200", bgGlow: "shadow-violet-500/20", color: "bg-violet-950/60 border-violet-400/30", toxicColor: "bg-red-950/70 border-red-400/40" },
-  ewaste: { icon: Cpu, label: "E-waste", iconColor: "text-teal-200", bgGlow: "shadow-teal-500/20", color: "bg-teal-950/60 border-teal-400/30", toxicColor: "bg-red-950/70 border-red-400/40" },
+  bottle: {
+    icon: FlaskRound, label: "Plastic",
+    iconColor: "#7dd3fc", glowColor: "rgba(56,189,248,0.35)",
+    bgGrad: "linear-gradient(135deg, rgba(12,74,110,0.7) 0%, rgba(7,89,133,0.5) 100%)",
+    borderColor: "rgba(56,189,248,0.4)",
+    toxicGrad: "linear-gradient(135deg, rgba(127,29,29,0.7) 0%, rgba(153,27,27,0.5) 100%)",
+    toxicBorder: "rgba(248,113,113,0.5)", toxicGlow: "rgba(248,113,113,0.4)",
+    size: 9
+  },
+  bag: {
+    icon: ShoppingBag, label: "Bag",
+    iconColor: "#fcd34d", glowColor: "rgba(252,211,77,0.3)",
+    bgGrad: "linear-gradient(135deg, rgba(120,53,15,0.7) 0%, rgba(146,64,14,0.5) 100%)",
+    borderColor: "rgba(252,211,77,0.4)",
+    toxicGrad: "linear-gradient(135deg, rgba(127,29,29,0.7) 0%, rgba(153,27,27,0.5) 100%)",
+    toxicBorder: "rgba(248,113,113,0.5)", toxicGlow: "rgba(248,113,113,0.4)",
+    size: 10
+  },
+  can: {
+    icon: Beer, label: "Can",
+    iconColor: "#d4d4d8", glowColor: "rgba(161,161,170,0.25)",
+    bgGrad: "linear-gradient(135deg, rgba(63,63,70,0.7) 0%, rgba(82,82,91,0.5) 100%)",
+    borderColor: "rgba(161,161,170,0.4)",
+    toxicGrad: "linear-gradient(135deg, rgba(127,29,29,0.7) 0%, rgba(153,27,27,0.5) 100%)",
+    toxicBorder: "rgba(248,113,113,0.5)", toxicGlow: "rgba(248,113,113,0.4)",
+    size: 8
+  },
+  barrel: {
+    icon: Biohazard, label: "Toxic Barrel",
+    iconColor: "#fdba74", glowColor: "rgba(251,146,60,0.35)",
+    bgGrad: "linear-gradient(135deg, rgba(124,45,18,0.7) 0%, rgba(154,52,18,0.5) 100%)",
+    borderColor: "rgba(251,146,60,0.45)",
+    toxicGrad: "linear-gradient(135deg, rgba(127,29,29,0.8) 0%, rgba(153,27,27,0.6) 100%)",
+    toxicBorder: "rgba(248,113,113,0.6)", toxicGlow: "rgba(248,113,113,0.5)",
+    size: 11
+  },
+  oil: {
+    icon: Fuel, label: "Oil Spill",
+    iconColor: "#c4b5fd", glowColor: "rgba(167,139,250,0.3)",
+    bgGrad: "linear-gradient(135deg, rgba(76,29,149,0.7) 0%, rgba(91,33,182,0.5) 100%)",
+    borderColor: "rgba(167,139,250,0.4)",
+    toxicGrad: "linear-gradient(135deg, rgba(127,29,29,0.7) 0%, rgba(153,27,27,0.5) 100%)",
+    toxicBorder: "rgba(248,113,113,0.5)", toxicGlow: "rgba(248,113,113,0.4)",
+    size: 9
+  },
+  ewaste: {
+    icon: Battery, label: "E-waste",
+    iconColor: "#5eead4", glowColor: "rgba(45,212,191,0.3)",
+    bgGrad: "linear-gradient(135deg, rgba(17,94,89,0.7) 0%, rgba(19,78,74,0.5) 100%)",
+    borderColor: "rgba(45,212,191,0.4)",
+    toxicGrad: "linear-gradient(135deg, rgba(127,29,29,0.7) 0%, rgba(153,27,27,0.5) 100%)",
+    toxicBorder: "rgba(248,113,113,0.5)", toxicGlow: "rgba(248,113,113,0.4)",
+    size: 9
+  },
+  bomb: {
+    icon: Bomb, label: "Explosive",
+    iconColor: "#fca5a5", glowColor: "rgba(248,113,113,0.4)",
+    bgGrad: "linear-gradient(135deg, rgba(127,29,29,0.8) 0%, rgba(69,10,10,0.6) 100%)",
+    borderColor: "rgba(248,113,113,0.5)",
+    toxicGrad: "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(69,10,10,0.7) 100%)",
+    toxicBorder: "rgba(248,113,113,0.6)", toxicGlow: "rgba(248,113,113,0.5)",
+    size: 10
+  },
+  nuclear: {
+    icon: AlertTriangle, label: "Hazard",
+    iconColor: "#fde047", glowColor: "rgba(250,204,21,0.35)",
+    bgGrad: "linear-gradient(135deg, rgba(113,63,18,0.7) 0%, rgba(133,77,14,0.5) 100%)",
+    borderColor: "rgba(250,204,21,0.45)",
+    toxicGrad: "linear-gradient(135deg, rgba(127,29,29,0.8) 0%, rgba(153,27,27,0.6) 100%)",
+    toxicBorder: "rgba(248,113,113,0.6)", toxicGlow: "rgba(248,113,113,0.5)",
+    size: 9
+  },
 };
 
 const LEVEL_NAMES = [
@@ -89,11 +154,15 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
   const CONTAINER_Y = 95;
   const CONTAINER_WIDTH = 14;
   const NEAR_MISS_WIDTH = 22;
-  const POLLUTION_TYPES = ["bottle", "bag", "can", "barrel", "oil", "ewaste"];
+  const POLLUTION_TYPES = ["bottle", "bag", "can", "barrel", "oil", "ewaste", "bomb", "nuclear"];
   const COMBO_TIMEOUT = 1800;
   const WIN_TIME = diffConfig.winTime;
   const touchLeftRef = useRef(false);
   const touchRightRef = useRef(false);
+  const [playerVelocity, setPlayerVelocity] = useState(0);
+  const [playerTrail, setPlayerTrail] = useState([]);
+  const playerTrailRef = useRef([]);
+  const lastTrailTimeRef = useRef(0);
 
   scoreRef.current = score;
   levelRef.current = level;
@@ -236,12 +305,14 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
       setWindDirection(Math.sin(timestamp * 0.0008) * 0.15);
 
       const keys = keysRef.current;
+      let moveDir = 0;
       if (keys.has("arrowleft") || keys.has("a") || touchLeftRef.current) {
         setPlayerPosition(p => {
           const next = Math.max(5, p - 5 * dtScale);
           playerPosRef.current = next;
           return next;
         });
+        moveDir = -1;
       }
       if (keys.has("arrowright") || keys.has("d") || touchRightRef.current) {
         setPlayerPosition(p => {
@@ -249,6 +320,20 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
           playerPosRef.current = next;
           return next;
         });
+        moveDir = 1;
+      }
+      setPlayerVelocity(prev => prev * 0.8 + moveDir * 0.2);
+
+      if (moveDir !== 0 && timestamp - lastTrailTimeRef.current > 60) {
+        lastTrailTimeRef.current = timestamp;
+        const trailId = timestamp + Math.random();
+        const newTrail = { id: trailId, x: playerPosRef.current, t: timestamp };
+        playerTrailRef.current = [...playerTrailRef.current.slice(-8), newTrail];
+        setPlayerTrail([...playerTrailRef.current]);
+        setTimeout(() => {
+          playerTrailRef.current = playerTrailRef.current.filter(t => t.id !== trailId);
+          setPlayerTrail([...playerTrailRef.current]);
+        }, 400);
       }
 
       if (Date.now() - comboTimerRef.current > COMBO_TIMEOUT && comboRef.current > 0) {
@@ -475,6 +560,9 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
     setHitParticles([]);
     setPowerUpTimer(0);
     setScreenShake(0);
+    setPlayerVelocity(0);
+    setPlayerTrail([]);
+    playerTrailRef.current = [];
     scoreRef.current = 0;
     levelRef.current = 1;
     healthRef.current = 100;
@@ -1004,20 +1092,32 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
         <AnimatePresence>
           {hitParticles.map(p => (
             <motion.div key={p.id} className="absolute z-30 pointer-events-none" style={{ left: `${p.x}%`, top: `${p.y}%` }}>
-              {[...Array(4)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
-                  animate={{
-                    x: (Math.cos(i * Math.PI / 2) * 15),
-                    y: (Math.sin(i * Math.PI / 2) * 15),
-                    opacity: 0,
-                    scale: 0
-                  }}
-                  transition={{ duration: 0.4 }}
-                  className={`absolute w-1 h-1 rounded-full ${p.color}`}
-                />
-              ))}
+              {[...Array(8)].map((_, i) => {
+                const angle = (i / 8) * Math.PI * 2;
+                const dist = 12 + Math.random() * 12;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                    animate={{
+                      x: Math.cos(angle) * dist,
+                      y: Math.sin(angle) * dist - 5,
+                      opacity: 0,
+                      scale: 0
+                    }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className={`absolute rounded-full ${p.color}`}
+                    style={{ width: i % 3 === 0 ? '3px' : '2px', height: i % 3 === 0 ? '3px' : '2px' }}
+                  />
+                );
+              })}
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0.6 }}
+                animate={{ scale: 2.5, opacity: 0 }}
+                transition={{ duration: 0.4 }}
+                className={`absolute w-4 h-4 -translate-x-2 -translate-y-2 rounded-full ${p.color}`}
+                style={{ filter: 'blur(4px)' }}
+              />
             </motion.div>
           ))}
         </AnimatePresence>
@@ -1028,49 +1128,97 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
         {pollution.map((p) => {
           const config = GARBAGE_CONFIG[p.type] || GARBAGE_CONFIG.bottle;
           const Icon = config.icon;
+          const sz = config.size || 9;
+          const icoSz = Math.round(sz * 0.5);
+          const wobble = Math.sin(p.rotation * 0.05) * 3;
           return (
             <div
               key={p.id}
               style={{
                 left: `${p.x}%`,
                 top: `${p.y}%`,
-                transform: `translate(-50%, -50%) rotate(${p.rotation}deg)`
+                transform: `translate(-50%, -50%) rotate(${p.rotation}deg) scale(${p.isToxic ? 1.15 : 1})`
               }}
               className="absolute z-[6]"
             >
-              <div className={cn("relative transition-transform", p.isToxic && "scale-110")}>
-                <div className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center border backdrop-blur-[2px]",
-                  p.isToxic ? config.toxicColor : config.color,
-                  "shadow-lg",
-                  p.isToxic ? "shadow-red-500/15" : config.bgGlow
-                )}>
-                  <Icon className={cn("w-4 h-4", p.isToxic ? "text-red-300" : config.iconColor)} />
+              <div className="relative">
+                {p.isToxic && (
+                  <div className="absolute -inset-2 rounded-full animate-pulse" style={{
+                    background: `radial-gradient(circle, ${config.toxicGlow} 0%, transparent 70%)`,
+                  }} />
+                )}
+                {!p.isToxic && (
+                  <div className="absolute -inset-1.5 rounded-full" style={{
+                    background: `radial-gradient(circle, ${config.glowColor} 0%, transparent 70%)`,
+                    opacity: 0.5 + Math.sin(p.rotation * 0.08) * 0.3
+                  }} />
+                )}
+                <div
+                  className="flex items-center justify-center backdrop-blur-sm"
+                  style={{
+                    width: `${sz * 4}px`,
+                    height: `${sz * 4}px`,
+                    borderRadius: p.type === 'barrel' || p.type === 'bomb' ? '50%' : '10px',
+                    background: p.isToxic ? config.toxicGrad : config.bgGrad,
+                    border: `1.5px solid ${p.isToxic ? config.toxicBorder : config.borderColor}`,
+                    boxShadow: `0 4px 16px ${p.isToxic ? config.toxicGlow : config.glowColor}, inset 0 1px 0 rgba(255,255,255,0.08)`,
+                    transform: `translateY(${wobble}px)`
+                  }}
+                >
+                  <Icon
+                    style={{
+                      width: `${icoSz * 4}px`,
+                      height: `${icoSz * 4}px`,
+                      color: p.isToxic ? '#fca5a5' : config.iconColor,
+                      filter: `drop-shadow(0 0 ${p.isToxic ? '6px rgba(248,113,113,0.6)' : `4px ${config.glowColor}`})`,
+                    }}
+                  />
                 </div>
                 {p.isToxic && (
-                  <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full animate-ping opacity-30" />
+                  <>
+                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping opacity-40" />
+                    <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-400 rounded-full" />
+                    <Skull className="absolute -bottom-1 -left-1 w-3 h-3 text-red-400/60" style={{ filter: 'drop-shadow(0 0 3px rgba(248,113,113,0.4))' }} />
+                  </>
                 )}
-                <div className="absolute top-full left-1/2 -translate-x-1/2 w-[1px] h-3 bg-gradient-to-b from-white/[0.06] to-transparent" />
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-[2px] h-4 rounded-full" style={{
+                  background: `linear-gradient(to bottom, ${p.isToxic ? 'rgba(248,113,113,0.15)' : config.glowColor.replace(/[\d.]+\)$/, '0.12)')} 0%, transparent 100%)`
+                }} />
               </div>
             </div>
           );
         })}
 
-        {/* Projectiles - Green energy shots */}
-        {projectiles.map((p) => (
-          <div
-            key={p.id}
-            style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)' }}
-            className="absolute z-[6]"
-          >
-            <div className="relative">
-              <div className="w-1.5 h-6 bg-gradient-to-b from-emerald-200 via-emerald-400 to-green-600 rounded-full" />
-              <div className="absolute inset-0 w-1.5 h-6 bg-emerald-300 rounded-full blur-[4px] opacity-50" />
-              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-emerald-300/40 rounded-full blur-[3px]" />
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[2px] h-3 bg-gradient-to-b from-emerald-400/25 to-transparent" />
+        {/* Projectiles - Energy shots */}
+        {projectiles.map((p) => {
+          const isBeam = activePowerUp === 'beam';
+          return (
+            <div
+              key={p.id}
+              style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)' }}
+              className="absolute z-[6]"
+            >
+              <div className="relative">
+                <div className="w-2 h-7 rounded-full" style={{
+                  background: isBeam
+                    ? 'linear-gradient(to bottom, #fef08a, #facc15, #ca8a04)'
+                    : 'linear-gradient(to bottom, #a7f3d0, #34d399, #059669)'
+                }} />
+                <div className="absolute inset-0 w-2 h-7 rounded-full opacity-60" style={{
+                  background: isBeam ? '#facc15' : '#6ee7b7',
+                  filter: 'blur(5px)'
+                }} />
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full" style={{
+                  background: isBeam ? 'rgba(250,204,21,0.5)' : 'rgba(110,231,183,0.45)',
+                  filter: 'blur(4px)'
+                }} />
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-[2px] h-4 rounded-full" style={{
+                  background: `linear-gradient(to bottom, ${isBeam ? 'rgba(250,204,21,0.3)' : 'rgba(74,222,128,0.25)'} 0%, transparent 100%)`
+                }} />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* Power-Ups */}
         {powerUps.map((p) => (
@@ -1090,55 +1238,126 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
           </motion.div>
         ))}
 
+        {/* Player Trail */}
+        {playerTrail.map((t, i) => (
+          <motion.div
+            key={t.id}
+            initial={{ opacity: 0.25, scale: 1 }}
+            animate={{ opacity: 0, scale: 0.3 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="absolute bottom-[6%] z-[7] pointer-events-none"
+            style={{ left: `${t.x}%`, transform: 'translateX(-50%)' }}
+          >
+            <div className="w-3 h-6 rounded-full" style={{
+              background: activePowerUp === 'shield' ? 'rgba(59,130,246,0.15)' : activePowerUp === 'beam' ? 'rgba(234,179,8,0.15)' : 'rgba(74,222,128,0.12)',
+              filter: 'blur(4px)'
+            }} />
+          </motion.div>
+        ))}
+
         {/* Player + Container */}
         <div
           className="absolute bottom-0 left-0 -translate-x-1/2 z-[8]"
-          style={{ left: `${playerPosition}%`, transition: 'left 0.03s linear' }}
+          style={{
+            left: `${playerPosition}%`,
+            transition: 'left 0.03s linear',
+            transform: `translateX(-50%) rotate(${playerVelocity * -12}deg)`,
+          }}
         >
           <div className="relative flex flex-col items-center">
             {/* Guardian */}
             <div className="relative mb-0.5">
               {activePowerUp === "shield" && (
                 <motion.div
-                  animate={{ scale: [1, 1.06, 1], opacity: [0.4, 0.6, 0.4] }}
-                  transition={{ repeat: Infinity, duration: 1.5 }}
-                  className="absolute -inset-5 rounded-full border border-amber-300/20 bg-amber-400/[0.03]"
+                  animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.55, 0.3], rotate: [0, 180, 360] }}
+                  transition={{ repeat: Infinity, duration: 2.5, ease: "linear" }}
+                  className="absolute -inset-6 rounded-full border-2 border-dashed border-blue-400/25"
+                  style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)' }}
                 />
               )}
-              <div className="absolute -inset-3 bg-emerald-400/10 rounded-full blur-lg" />
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center relative z-10 border"
+              {activePowerUp === "beam" && (
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
+                  transition={{ repeat: Infinity, duration: 0.8 }}
+                  className="absolute -inset-4 rounded-full"
+                  style={{ background: 'radial-gradient(circle, rgba(234,179,8,0.12) 0%, transparent 70%)' }}
+                />
+              )}
+              <div className="absolute -inset-4 rounded-full blur-xl" style={{
+                background: activePowerUp === 'shield' ? 'rgba(59,130,246,0.12)' : activePowerUp === 'beam' ? 'rgba(234,179,8,0.12)' : 'rgba(74,222,128,0.1)'
+              }} />
+              <motion.div
+                animate={{
+                  y: [0, -2, 0, 1, 0],
+                  scale: Math.abs(playerVelocity) > 0.1 ? [1, 1.05, 1] : 1
+                }}
+                transition={{ y: { repeat: Infinity, duration: 2, ease: "easeInOut" }, scale: { duration: 0.3 } }}
+                className="w-12 h-12 rounded-xl flex items-center justify-center relative z-10 border-2"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(6,78,59,0.7) 0%, rgba(22,101,52,0.5) 100%)',
-                  borderColor: 'rgba(74,222,128,0.3)',
-                  boxShadow: '0 0 20px rgba(74,222,128,0.15), inset 0 1px 0 rgba(255,255,255,0.05)'
+                  background: activePowerUp === 'shield'
+                    ? 'linear-gradient(135deg, rgba(30,64,175,0.7) 0%, rgba(37,99,235,0.5) 100%)'
+                    : activePowerUp === 'beam'
+                    ? 'linear-gradient(135deg, rgba(120,53,15,0.7) 0%, rgba(217,119,6,0.5) 100%)'
+                    : 'linear-gradient(135deg, rgba(6,78,59,0.8) 0%, rgba(22,101,52,0.6) 100%)',
+                  borderColor: activePowerUp === 'shield'
+                    ? 'rgba(96,165,250,0.5)'
+                    : activePowerUp === 'beam'
+                    ? 'rgba(251,191,36,0.5)'
+                    : 'rgba(74,222,128,0.4)',
+                  boxShadow: `0 0 24px ${activePowerUp === 'shield' ? 'rgba(59,130,246,0.25)' : activePowerUp === 'beam' ? 'rgba(234,179,8,0.25)' : 'rgba(74,222,128,0.2)'}, inset 0 1px 0 rgba(255,255,255,0.08)`
                 }}
               >
-                <Leaf className="w-5 h-5 text-emerald-300" style={{ filter: 'drop-shadow(0 0 4px rgba(74,222,128,0.4))' }} />
-              </div>
-              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-amber-300/40 rounded-full blur-[2px]" />
+                <Leaf className="w-5.5 h-5.5" style={{
+                  color: activePowerUp === 'shield' ? '#93c5fd' : activePowerUp === 'beam' ? '#fcd34d' : '#6ee7b7',
+                  filter: `drop-shadow(0 0 6px ${activePowerUp === 'shield' ? 'rgba(96,165,250,0.5)' : activePowerUp === 'beam' ? 'rgba(251,191,36,0.5)' : 'rgba(74,222,128,0.5)'})`
+                }} />
+              </motion.div>
+              <motion.div
+                animate={{ opacity: [0.3, 0.7, 0.3], scale: [0.8, 1.2, 0.8] }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full"
+                style={{
+                  backgroundColor: activePowerUp === 'shield' ? 'rgba(96,165,250,0.6)' : activePowerUp === 'beam' ? 'rgba(251,191,36,0.6)' : 'rgba(250,204,21,0.5)',
+                  boxShadow: `0 0 6px ${activePowerUp === 'shield' ? 'rgba(96,165,250,0.4)' : activePowerUp === 'beam' ? 'rgba(251,191,36,0.4)' : 'rgba(250,204,21,0.3)'}`
+                }}
+              />
             </div>
 
             {/* Container */}
             <div className="relative w-24 h-8" data-testid="garbage-container">
               <div className="absolute inset-0 rounded-b-lg rounded-t-sm overflow-hidden border-2"
                 style={{
-                  background: 'linear-gradient(to bottom, rgba(6,78,59,0.6) 0%, rgba(6,60,40,0.8) 100%)',
-                  borderColor: 'rgba(74,222,128,0.35)',
-                  boxShadow: '0 0 15px rgba(74,222,128,0.1), inset 0 1px 0 rgba(255,255,255,0.04)'
+                  background: activePowerUp === 'shield'
+                    ? 'linear-gradient(to bottom, rgba(30,64,175,0.5) 0%, rgba(30,58,138,0.7) 100%)'
+                    : activePowerUp === 'beam'
+                    ? 'linear-gradient(to bottom, rgba(120,53,15,0.5) 0%, rgba(92,45,14,0.7) 100%)'
+                    : 'linear-gradient(to bottom, rgba(6,78,59,0.6) 0%, rgba(6,60,40,0.8) 100%)',
+                  borderColor: activePowerUp === 'shield' ? 'rgba(96,165,250,0.45)' : activePowerUp === 'beam' ? 'rgba(251,191,36,0.4)' : 'rgba(74,222,128,0.35)',
+                  boxShadow: `0 0 20px ${activePowerUp === 'shield' ? 'rgba(59,130,246,0.15)' : activePowerUp === 'beam' ? 'rgba(234,179,8,0.15)' : 'rgba(74,222,128,0.1)'}, inset 0 1px 0 rgba(255,255,255,0.04)`
                 }}
               >
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-emerald-400/30" />
-                <div className="absolute top-[2px] left-1 right-1 h-[1px] bg-emerald-400/10" />
-                <div className="absolute left-1 top-1 bottom-1 w-[1px] bg-emerald-400/10" />
-                <div className="absolute right-1 top-1 bottom-1 w-[1px] bg-emerald-400/10" />
+                <div className="absolute top-0 left-0 right-0 h-[2px]" style={{
+                  backgroundColor: activePowerUp === 'shield' ? 'rgba(96,165,250,0.4)' : activePowerUp === 'beam' ? 'rgba(251,191,36,0.35)' : 'rgba(74,222,128,0.3)'
+                }} />
+                <div className="absolute top-[2px] left-1 right-1 h-[1px] bg-white/[0.06]" />
+                <div className="absolute left-1 top-1 bottom-1 w-[1px] bg-white/[0.06]" />
+                <div className="absolute right-1 top-1 bottom-1 w-[1px] bg-white/[0.06]" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Trash2 className="w-3.5 h-3.5 text-emerald-400/30 mr-1" />
-                  <span className="text-[8px] text-emerald-400/40 font-display uppercase tracking-[0.3em]">recycle</span>
+                  <Trash2 className="w-3.5 h-3.5 mr-1" style={{
+                    color: activePowerUp === 'shield' ? 'rgba(96,165,250,0.35)' : activePowerUp === 'beam' ? 'rgba(251,191,36,0.3)' : 'rgba(74,222,128,0.3)'
+                  }} />
+                  <span className="text-[8px] font-display uppercase tracking-[0.3em]" style={{
+                    color: activePowerUp === 'shield' ? 'rgba(96,165,250,0.45)' : activePowerUp === 'beam' ? 'rgba(251,191,36,0.4)' : 'rgba(74,222,128,0.4)'
+                  }}>recycle</span>
                 </div>
               </div>
-              <div className="absolute -inset-1 bg-emerald-400/[0.06] rounded-lg blur-md -z-10" />
+              <div className="absolute -inset-1 rounded-lg blur-md -z-10" style={{
+                backgroundColor: activePowerUp === 'shield' ? 'rgba(59,130,246,0.06)' : activePowerUp === 'beam' ? 'rgba(234,179,8,0.06)' : 'rgba(74,222,128,0.06)'
+              }} />
               {collected > 0 && (
-                <div className="absolute -inset-3 bg-emerald-400/[0.05] rounded-xl blur-xl -z-10" />
+                <div className="absolute -inset-3 rounded-xl blur-xl -z-10" style={{
+                  backgroundColor: activePowerUp === 'shield' ? 'rgba(59,130,246,0.05)' : activePowerUp === 'beam' ? 'rgba(234,179,8,0.05)' : 'rgba(74,222,128,0.05)'
+                }} />
               )}
             </div>
           </div>
