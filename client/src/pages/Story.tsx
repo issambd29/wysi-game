@@ -160,7 +160,7 @@ export default function Story() {
 
           <div className="w-20 h-px mx-auto bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent mb-6" />
 
-          <p className="text-white/35 font-body text-sm md:text-base leading-relaxed max-w-lg mx-auto">
+          <p className="text-white/35 font-display text-sm md:text-base leading-relaxed tracking-wide max-w-lg mx-auto">
             Somewhere beyond the stars, a dying world turned its rage toward Earth.
             This is the story of how the planet chose its secret protector, and the silent war
             that no one was ever meant to see.
