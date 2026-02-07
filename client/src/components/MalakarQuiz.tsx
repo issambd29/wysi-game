@@ -54,20 +54,20 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }: MalakarQuizProps) {
 
   const narrativePages = [
     {
-      text: "Darkness swallowed you whole. When you opened your eyes, you found yourself in a twisted, shimmering dimension of floating rocks and violet skies.",
-      speech: "Darkness swallowed you whole. A twisted dimension of floating rocks and violet skies.",
+      text: "The cannons fell silent. The sky cleared. But before you could breathe, a rift tore open beneath you. Darkness swallowed you whole. When your eyes opened, you found yourself in a twisted dimension of floating rocks and violet skies\u2014Malakar's realm between the stars.",
+      speech: "The cannons fell silent. But a rift tore open beneath you. Darkness swallowed you whole. You found yourself in Malakar's realm, between the stars.",
     },
     {
-      text: '"You defeated me, hero," he rasped, his voice echoing in the strange space. "But as I fell, I realized something... true victory without struggle tastes like ashes. Empty. Bitter."',
-      speech: "You defeated me, hero. But as I fell, I realized something. True victory without struggle tastes like ashes. Empty. Bitter.",
+      text: "Dr. Alistair Malakar stood before you, his scarred face lit by the violet glow. \"You destroyed my weapon, keeper,\" he said, his voice echoing through the void. \"The same weapon I built from the ruins of Draxxon. The same garbage that killed my world. I aimed it at yours, and you... you stopped it.\"",
+      speech: "You destroyed my weapon, keeper. The same weapon I built from the ruins of Draxxon. The same garbage that killed my world. I aimed it at yours, and you stopped it.",
     },
     {
-      text: '"I could simply destroy you now. But where\'s the flavor in that? Instead, let\'s play a final game. You fought so hard for Earth\u2014let\'s see how well you actually know it."',
-      speech: "I could simply destroy you now. But where's the flavor in that? Let's play a final game. Let's see how well you actually know Earth.",
+      text: "He stepped closer, his eyes cold with centuries of grief. \"I could trap you here forever. But where is the satisfaction in that? Instead, let us play one final game. You fought so hard for Earth\u2014let us see if you actually understand it.\"",
+      speech: "I could trap you here forever. But where is the satisfaction in that? Let us play one final game. You fought so hard for Earth. Let us see if you actually understand it.",
     },
     {
-      text: '"Five questions about the world you sacrificed so much to save. Answer four correctly, and I\'ll return you to your precious Earth. But... if you miss even two... you\'ll remain here with me forever."',
-      speech: "Five questions about the world you sacrificed so much to save. Answer four correctly, and I'll return you. Miss even two, and you remain here forever.",
+      text: "\"Five questions about the world you sacrificed everything to save. Answer four correctly, and I will open a portal back to your precious planet. But if you miss even two...\" He smiled, the first true emotion on his face. \"You remain here. With me. In the silence. Forever.\"",
+      speech: "Five questions about the world you sacrificed everything to save. Answer four correctly, and I open a portal home. Miss even two, and you remain here. With me. In the silence. Forever.",
     },
   ];
 
@@ -82,10 +82,10 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }: MalakarQuizProps) {
     if (phase === "result") {
       if (passed) {
         GameSounds.quizPass();
-        setTimeout(() => speakVillain("Impossible! You actually know your precious Earth. Fine, go. But I will return, keeper."), 600);
+        setTimeout(() => speakVillain("Impossible! You actually know your precious Earth. You are not like the people of Draxxon. Fine. Go. But I will return, keeper. I always return."), 600);
       } else {
         GameSounds.quizFail();
-        setTimeout(() => speakVillain("Ha ha ha! You fought for a world you barely understand. Welcome to your new home, keeper."), 600);
+        setTimeout(() => speakVillain("Ha ha ha! You fought for a world you barely understand. Just like the people of Draxxon. They didn't know their world either, until it was gone. Welcome to your new home, keeper."), 600);
       }
     }
     return () => stopVillainSpeech();
@@ -363,8 +363,8 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }: MalakarQuizProps) {
                 passed ? 'text-emerald-300/60' : 'text-red-300/60'
               }`}>
                 {passed
-                  ? "Malakar's form shattered into light. You proved your devotion to Earth\u2014not just with strength, but with knowledge. The portal opens. Welcome home, Keeper."
-                  : "Malakar's laughter echoes through the void. \"You fought for a world you barely understand.\" The dimension closes around you. Earth fades from memory..."
+                  ? "Malakar's dimension shattered into light. The portal tore open, and through it you could see green trees, blue sky, sunlight on water. You proved your devotion to Earth\u2014not just with strength, but with knowledge. \"I will return, keeper,\" Malakar's voice echoed as you stepped through. Welcome home."
+                  : "Malakar's laughter echoed through the void, cold and final. \"You fought for a world you barely understand. Just like Draxxon's people. They didn't know their world either, until it was gone.\" The dimension sealed around you. Earth faded from memory like a dream at dawn..."
                 }
               </p>
             </motion.div>
