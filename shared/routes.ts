@@ -15,11 +15,9 @@ export const errorSchemas = {
 };
 
 export const api = {
-  // Placeholder for future API routes if needed
-  // Firebase is handled on the client side for this app
   status: {
     check: {
-      method: 'GET' as const,
+      method: 'GET',
       path: '/api/status',
       responses: {
         200: z.object({ status: z.string() }),
@@ -28,7 +26,7 @@ export const api = {
   },
 };
 
-export function buildUrl(path: string, params?: Record<string, string | number>): string {
+export function buildUrl(path, params) {
   let url = path;
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
