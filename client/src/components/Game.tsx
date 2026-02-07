@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, Star, Wind, Flame, Heart, Globe, RotateCcw, Home } from "lucide-react";
+import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, Star, Wind, Flame, Heart, Globe, RotateCcw, Home, Crown, TreeDeciduous } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Difficulty } from "./DifficultySelect";
@@ -69,9 +69,9 @@ const LEVEL_NAMES = [
 const LEVEL_THRESHOLDS = [0, 300, 750, 1500, 2500, 4000, 6000, 8500, 12000, 16000];
 
 const DIFFICULTY_CONFIG = {
-  easy: { speedMult: 0.75, spawnMult: 1.3, toxicBase: 0.12, toxicScale: 0.04, damageMult: 0.8, healMult: 1.0, label: "Calm Nature", Icon: Leaf, color: "text-emerald-400" },
-  normal: { speedMult: 1.1, spawnMult: 0.85, toxicBase: 0.2, toxicScale: 0.06, damageMult: 1.2, healMult: 0.6, label: "Balanced Earth", Icon: Globe, color: "text-sky-400" },
-  hard: { speedMult: 1.5, spawnMult: 0.55, toxicBase: 0.32, toxicScale: 0.08, damageMult: 1.6, healMult: 0.3, label: "Nature in Crisis", Icon: Flame, color: "text-orange-400" },
+  easy: { speedMult: 0.75, spawnMult: 1.3, toxicBase: 0.12, toxicScale: 0.04, damageMult: 0.8, healMult: 1.0, label: "Calm Nature", Icon: Leaf, color: "text-emerald-400", winTime: 180 },
+  normal: { speedMult: 1.1, spawnMult: 0.85, toxicBase: 0.2, toxicScale: 0.06, damageMult: 1.2, healMult: 0.6, label: "Balanced Earth", Icon: Globe, color: "text-sky-400", winTime: 150 },
+  hard: { speedMult: 1.5, spawnMult: 0.55, toxicBase: 0.32, toxicScale: 0.08, damageMult: 1.6, healMult: 0.3, label: "Nature in Crisis", Icon: Flame, color: "text-orange-400", winTime: 120 },
 };
 
 export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
@@ -80,6 +80,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
   const [level, setLevel] = useState(1);
   const [time, setTime] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [gameWon, setGameWon] = useState(false);
   const [paused, setPaused] = useState(false);
 
   const [playerPosition, setPlayerPosition] = useState(50);
@@ -115,12 +116,14 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
   const levelRef = useRef(1);
   const healthRef = useRef(100);
   const gameOverRef = useRef(false);
+  const gameWonRef = useRef(false);
   const playerPosRef = useRef(50);
   const activePowerUpRef = useRef<string | null>(null);
   const comboRef = useRef(0);
   const popupIdRef = useRef(0);
   const particleIdRef = useRef(0);
   const scoreSavedRef = useRef(false);
+  const timeRef = useRef(0);
 
   const PLAYER_Y = 85;
   const SHOT_SPEED = 2;
@@ -129,18 +132,21 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
   const NEAR_MISS_WIDTH = 20;
   const POLLUTION_TYPES: GameObject["type"][] = ["bottle", "bag", "can", "barrel", "oil", "ewaste"];
   const COMBO_TIMEOUT = 1800;
+  const WIN_TIME = diffConfig.winTime;
 
   scoreRef.current = score;
   levelRef.current = level;
   healthRef.current = health;
   gameOverRef.current = gameOver;
+  gameWonRef.current = gameWon;
   playerPosRef.current = playerPosition;
   activePowerUpRef.current = activePowerUp;
   comboRef.current = combo;
   pausedRef.current = paused;
+  timeRef.current = time;
 
   useEffect(() => {
-    if (gameOver && !scoreSavedRef.current && onSaveScore) {
+    if ((gameOver || gameWon) && !scoreSavedRef.current && onSaveScore) {
       scoreSavedRef.current = true;
       onSaveScore({
         score,
@@ -153,7 +159,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
         time,
       });
     }
-  }, [gameOver]);
+  }, [gameOver, gameWon]);
 
   const addPopup = useCallback((x: number, y: number, text: string, color: string) => {
     const id = ++popupIdRef.current;
@@ -204,12 +210,12 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (gameOverRef.current) return;
+        if (gameOverRef.current || gameWonRef.current) return;
         keysRef.current.clear();
         setPaused(p => !p);
         return;
       }
-      if (gameOverRef.current || pausedRef.current) return;
+      if (gameOverRef.current || gameWonRef.current || pausedRef.current) return;
       keysRef.current.add(e.key.toLowerCase());
     };
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -227,7 +233,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
     let lastTimestamp = 0;
 
     const tick = (timestamp: number) => {
-      if (gameOverRef.current) return;
+      if (gameOverRef.current || gameWonRef.current) return;
       if (pausedRef.current) {
         gameLoopRef.current = requestAnimationFrame(tick);
         return;
@@ -238,7 +244,14 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
       const dtScale = delta / 16.667;
 
       setBgOffset(prev => prev + 0.02 * dtScale);
-      setTime(t => t + delta / 1000);
+      setTime(t => {
+        const newTime = t + delta / 1000;
+        if (newTime >= WIN_TIME && !gameWonRef.current) {
+          setGameWon(true);
+          gameWonRef.current = true;
+        }
+        return newTime;
+      });
       setWindDirection(Math.sin(timestamp * 0.0008) * 0.15);
 
       const keys = keysRef.current;
@@ -433,7 +446,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
   }, [addPopup, addHitParticle, incrementCombo, getComboMultiplier, triggerShake]);
 
   useEffect(() => {
-    if (paused || gameOver) return;
+    if (paused || gameOver || gameWon) return;
     if (powerUpTimer > 0) {
       const timer = setInterval(() => {
         setPowerUpTimer(t => {
@@ -447,7 +460,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [powerUpTimer, paused, gameOver]);
+  }, [powerUpTimer, paused, gameOver, gameWon]);
 
   const resetGame = () => {
     setScore(0);
@@ -455,6 +468,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
     setTime(0);
     setLevel(1);
     setGameOver(false);
+    setGameWon(false);
     setPaused(false);
     setPollution([]);
     setProjectiles([]);
@@ -472,6 +486,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
     levelRef.current = 1;
     healthRef.current = 100;
     gameOverRef.current = false;
+    gameWonRef.current = false;
     playerPosRef.current = 50;
     activePowerUpRef.current = null;
     comboRef.current = 0;
@@ -484,6 +499,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
   const nextThreshold = LEVEL_THRESHOLDS[Math.min(level, LEVEL_THRESHOLDS.length - 1)];
   const prevThreshold = LEVEL_THRESHOLDS[Math.min(level - 1, LEVEL_THRESHOLDS.length - 1)];
   const levelProgress = nextThreshold > prevThreshold ? ((score - prevThreshold) / (nextThreshold - prevThreshold)) * 100 : 100;
+  const timeRemaining = Math.max(0, WIN_TIME - time);
 
   return (
     <motion.div
@@ -629,6 +645,32 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
               <div className="px-3 py-1.5 text-center">
                 <p className="text-white/25 text-[7px] tracking-[0.2em] uppercase font-display leading-none mb-0.5">Purified</p>
                 <p className="text-orange-300 text-base tabular-nums font-display leading-none" data-testid="text-destroyed">{destroyed}</p>
+              </div>
+            </div>
+
+            {/* Win Timer */}
+            <div className="px-3 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] min-w-[100px]">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-sky-400/70" />
+                  <p className="text-white/30 text-[7px] tracking-[0.2em] uppercase font-display leading-none">Survive</p>
+                </div>
+                <span className={cn(
+                  "text-[10px] tabular-nums font-display",
+                  timeRemaining <= 10 ? "text-red-400" : timeRemaining <= 30 ? "text-amber-400" : "text-sky-400/80"
+                )} data-testid="text-timer">
+                  {Math.floor(timeRemaining / 60)}:{String(Math.floor(timeRemaining % 60)).padStart(2, "0")}
+                </span>
+              </div>
+              <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                <motion.div
+                  className={cn(
+                    "h-full rounded-full",
+                    timeRemaining <= 10 ? "bg-red-500" : timeRemaining <= 30 ? "bg-amber-500" : "bg-sky-500/60"
+                  )}
+                  animate={{ width: `${Math.max(0, (1 - time / WIN_TIME) * 100)}%` }}
+                  transition={{ duration: 0.3 }}
+                />
               </div>
             </div>
 
@@ -1185,6 +1227,150 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
                   </Button>
                 </div>
               </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Victory / Congratulations */}
+        <AnimatePresence>
+          {gameWon && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 z-30 flex flex-col items-center justify-center p-4 text-center"
+              style={{
+                background: 'radial-gradient(ellipse at 50% 30%, rgba(6,78,59,0.5) 0%, rgba(0,0,0,0.85) 100%)',
+                backdropFilter: 'blur(16px)'
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.7, y: 30 }}
+                animate={{ scale: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 180, damping: 18, delay: 0.2 }}
+                className="flex flex-col items-center max-w-md w-full"
+              >
+                <motion.div
+                  initial={{ scale: 0, rotate: -30 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.4 }}
+                  className="relative mb-5"
+                >
+                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center border border-emerald-400/30"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(6,78,59,0.6) 0%, rgba(22,101,52,0.4) 100%)',
+                      boxShadow: '0 0 60px rgba(74,222,128,0.2), 0 0 120px rgba(74,222,128,0.1)'
+                    }}
+                  >
+                    <Crown className="w-10 h-10 text-amber-400" style={{ filter: 'drop-shadow(0 0 12px rgba(250,204,21,0.4))' }} />
+                  </div>
+                  <motion.div
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0, 0.3] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="absolute -inset-4 rounded-3xl border border-emerald-400/10"
+                  />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  <p className="text-[10px] tracking-[0.5em] uppercase font-display text-emerald-400/50 mb-2">Congratulations</p>
+                  <h2 className="text-3xl md:text-4xl font-display text-white/95 mb-1 tracking-tight">Earth is Saved</h2>
+                  <p className="text-emerald-300/50 font-body text-sm mb-6">The skies are clear. Nature breathes again, thanks to you, Keeper.</p>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                  className="w-full grid grid-cols-4 gap-2 mb-4"
+                >
+                  {[
+                    { label: "Score", value: score, color: "text-amber-300" },
+                    { label: "Saved", value: collected, color: "text-emerald-300" },
+                    { label: "Purified", value: destroyed, color: "text-orange-300" },
+                    { label: "Best Combo", value: `${maxCombo}x`, color: "text-amber-300" },
+                  ].map(s => (
+                    <div key={s.label} className="px-2 py-2 bg-white/[0.03] rounded-lg border border-white/[0.04] text-center">
+                      <p className="text-white/20 text-[7px] tracking-[0.2em] uppercase font-display mb-0.5">{s.label}</p>
+                      <p className={`text-lg font-display tabular-nums ${s.color}`}>{s.value}</p>
+                    </div>
+                  ))}
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.0 }}
+                  className="flex items-center gap-1.5 mb-4 px-3 py-1.5 bg-white/[0.03] rounded-lg border border-white/[0.04]"
+                >
+                  <Star className="w-3 h-3 text-amber-400/60" />
+                  <span className="text-white/30 text-[9px] tracking-widest uppercase font-display">Level {level}</span>
+                  <span className="text-white/10">-</span>
+                  <span className="text-amber-300/80 font-display text-xs">{levelName}</span>
+                  <span className="text-white/10">-</span>
+                  <DiffIcon className={`w-3 h-3 ${diffConfig.color}`} />
+                  <span className={`text-[9px] font-display ${diffConfig.color}`}>{diffConfig.label}</span>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.1 }}
+                  className="flex items-center gap-2 mb-5 px-4 py-2.5 bg-emerald-500/[0.06] rounded-xl border border-emerald-400/15"
+                >
+                  <TreeDeciduous className="w-4 h-4 text-emerald-400/70" />
+                  <p className="text-emerald-300/70 font-body text-xs italic leading-relaxed">
+                    "A true keeper does not fight for victory. They fight so every leaf, every river, every breath of wind may live on."
+                  </p>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.3 }}
+                  className="flex gap-2"
+                >
+                  <Button onClick={resetGame} className="px-5 rounded-lg bg-emerald-600/80 text-white font-display text-xs tracking-widest border border-emerald-500/30" data-testid="button-play-again">
+                    <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                    PLAY AGAIN
+                  </Button>
+                  <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-white/50 font-display text-xs tracking-widest border border-white/[0.06]" data-testid="button-victory-exit">
+                    <Home className="w-3.5 h-3.5 mr-1.5" />
+                    EXIT
+                  </Button>
+                </motion.div>
+              </motion.div>
+
+              {/* Victory particles */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                {[...Array(20)].map((_, i) => (
+                  <motion.div
+                    key={`victory-${i}`}
+                    initial={{ opacity: 0, y: 200 + Math.random() * 300 }}
+                    animate={{
+                      opacity: [0, 0.6, 0],
+                      y: [200 + Math.random() * 200, -(100 + Math.random() * 200)],
+                      x: [(Math.random() - 0.5) * 100, (Math.random() - 0.5) * 200],
+                    }}
+                    transition={{
+                      duration: 4 + Math.random() * 3,
+                      repeat: Infinity,
+                      delay: i * 0.3,
+                      ease: "easeOut",
+                    }}
+                    className="absolute rounded-full"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      width: `${2 + Math.random() * 3}px`,
+                      height: `${2 + Math.random() * 3}px`,
+                      backgroundColor: i % 3 === 0 ? 'rgba(74,222,128,0.5)' : i % 3 === 1 ? 'rgba(250,204,21,0.4)' : 'rgba(147,197,253,0.3)',
+                      boxShadow: `0 0 6px ${i % 3 === 0 ? 'rgba(74,222,128,0.3)' : i % 3 === 1 ? 'rgba(250,204,21,0.2)' : 'rgba(147,197,253,0.2)'}`,
+                    }}
+                  />
+                ))}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
