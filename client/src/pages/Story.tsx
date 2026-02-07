@@ -227,7 +227,7 @@ export default function Story() {
                       <div className="space-y-3">
                         {section.paragraphs.map((p, pIdx) => {
                           const isQuote = p.startsWith("\"");
-                          const isHighlight = p === "You were chosen because you care." || p === "But Earth was not defenseless. Not truly.";
+                          const isHighlight = p === "You were chosen because you care. Because when you see a river choked with waste, something inside you aches. Because when you see a forest burning, you feel it in your bones. The planet knows its own." || p === "But Earth was not defenseless. Not truly." || p === "It needed its keeper." || p === "And the keeper never stops.";
                           return (
                             <p
                               key={pIdx}
