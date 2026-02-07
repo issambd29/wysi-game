@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, Star, Wind, Flame, Heart, Globe, RotateCcw, Home, Crown, TreeDeciduous, Volume2, VolumeX } from "lucide-react";
+import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, ChevronLeft, ChevronRight, Star, Wind, Flame, Heart, Globe, RotateCcw, Home, Crown, TreeDeciduous, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Skull } from "lucide-react";
@@ -87,11 +87,13 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
   const PLAYER_Y = 85;
   const SHOT_SPEED = 2;
   const CONTAINER_Y = 95;
-  const CONTAINER_WIDTH = 12;
-  const NEAR_MISS_WIDTH = 20;
+  const CONTAINER_WIDTH = 14;
+  const NEAR_MISS_WIDTH = 22;
   const POLLUTION_TYPES = ["bottle", "bag", "can", "barrel", "oil", "ewaste"];
   const COMBO_TIMEOUT = 1800;
   const WIN_TIME = diffConfig.winTime;
+  const touchLeftRef = useRef(false);
+  const touchRightRef = useRef(false);
 
   scoreRef.current = score;
   levelRef.current = level;
@@ -234,14 +236,14 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
       setWindDirection(Math.sin(timestamp * 0.0008) * 0.15);
 
       const keys = keysRef.current;
-      if (keys.has("arrowleft") || keys.has("a")) {
+      if (keys.has("arrowleft") || keys.has("a") || touchLeftRef.current) {
         setPlayerPosition(p => {
           const next = Math.max(5, p - 5 * dtScale);
           playerPosRef.current = next;
           return next;
         });
       }
-      if (keys.has("arrowright") || keys.has("d")) {
+      if (keys.has("arrowright") || keys.has("d") || touchRightRef.current) {
         setPlayerPosition(p => {
           const next = Math.min(95, p + 5 * dtScale);
           playerPosRef.current = next;
@@ -501,22 +503,22 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
       style={{ background: 'radial-gradient(ellipse at 50% 20%, hsl(150, 35%, 8%) 0%, hsl(155, 28%, 5%) 35%, hsl(160, 22%, 3%) 65%, hsl(165, 15%, 1%) 100%)' }}
     >
       {/* HUD - Top Bar */}
-      <div className="absolute top-0 left-0 right-0 z-10 px-3 py-2">
-        <div className="flex flex-wrap justify-between items-center gap-2 max-w-5xl mx-auto">
+      <div className="absolute top-0 left-0 right-0 z-10 px-1.5 sm:px-3 py-1 sm:py-2">
+        <div className="flex flex-wrap justify-between items-start gap-1 sm:gap-2 max-w-5xl mx-auto">
           {/* Left HUD */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Guardian name */}
-            <div className="px-3 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06]">
+          <div className="flex items-center gap-1 sm:gap-3 flex-wrap">
+            {/* Guardian name - hidden on very small screens */}
+            <div className="hidden sm:block px-3 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06]">
               <p className="text-white/30 text-[8px] tracking-[0.3em] uppercase font-display leading-none mb-0.5">Guardian</p>
               <p className="text-white/90 text-xs tracking-widest font-display leading-none">{nickname}</p>
             </div>
 
             {/* Health */}
-            <div className="px-3 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] min-w-[140px]">
-              <div className="flex items-center justify-between mb-1">
+            <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] min-w-[80px] sm:min-w-[140px]">
+              <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                 <div className="flex items-center gap-1">
                   <Heart className={cn("w-3 h-3", health < 30 ? "text-red-400" : "text-emerald-400")} />
-                  <p className="text-white/30 text-[8px] tracking-[0.2em] uppercase font-display leading-none">Health</p>
+                  <p className="hidden sm:block text-white/30 text-[8px] tracking-[0.2em] uppercase font-display leading-none">Health</p>
                 </div>
                 <span className={cn("text-[10px] tabular-nums font-display", health < 30 ? "text-red-400" : "text-emerald-400")} data-testid="text-health">{health}%</span>
               </div>
@@ -529,35 +531,35 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
               </div>
             </div>
 
-            {/* Level */}
-            <div className="px-3 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] min-w-[130px]">
-              <div className="flex items-center justify-between mb-1">
+            {/* Level - compact on mobile */}
+            <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] min-w-[70px] sm:min-w-[130px]">
+              <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                 <div className="flex items-center gap-1">
                   <Star className="w-3 h-3 text-amber-400" />
                   <p className="text-white/30 text-[8px] tracking-[0.2em] uppercase font-display leading-none">Lv.{level}</p>
                 </div>
-                <span className="text-amber-400/80 text-[8px] font-display leading-none truncate max-w-[60px]">{levelName}</span>
+                <span className="hidden sm:block text-amber-400/80 text-[8px] font-display leading-none truncate max-w-[60px]">{levelName}</span>
               </div>
               <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
                 <div className="h-full bg-amber-500/60 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, levelProgress)}%` }} />
               </div>
             </div>
 
-            {/* Difficulty badge */}
-            <div className="px-2.5 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] flex items-center gap-1.5">
+            {/* Difficulty badge - hidden on small mobile */}
+            <div className="hidden sm:flex px-2.5 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] items-center gap-1.5">
               <DiffIcon className={`w-3 h-3 ${diffConfig.color}`} />
               <span className={`text-[8px] tracking-[0.15em] uppercase font-display ${diffConfig.color}`} data-testid="text-difficulty">{diffConfig.label}</span>
             </div>
 
-            {/* Wind indicator */}
-            <div className="px-2 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] flex items-center gap-1">
+            {/* Wind indicator - hidden on small mobile */}
+            <div className="hidden md:flex px-2 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] items-center gap-1">
               <Wind className="w-3 h-3 text-teal-400/60" style={{ transform: `scaleX(${windDirection > 0 ? 1 : -1})` }} />
               <span className="text-teal-400/40 text-[7px] font-display tracking-wider uppercase">Wind</span>
             </div>
           </div>
 
           {/* Right HUD */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
             {/* Combo */}
             <AnimatePresence>
               {combo >= 3 && (
@@ -623,28 +625,28 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
               )}
             </AnimatePresence>
 
-            {/* Stats */}
+            {/* Stats - compact on mobile */}
             <div className="flex items-center gap-0 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] overflow-hidden">
-              <div className="px-3 py-1.5 text-center border-r border-white/[0.04]">
-                <p className="text-white/25 text-[7px] tracking-[0.2em] uppercase font-display leading-none mb-0.5">Score</p>
-                <p className="text-amber-300 text-base tabular-nums font-display leading-none" data-testid="text-score">{score}</p>
+              <div className="px-1.5 sm:px-3 py-1 sm:py-1.5 text-center border-r border-white/[0.04]">
+                <p className="text-white/25 text-[6px] sm:text-[7px] tracking-[0.2em] uppercase font-display leading-none mb-0.5">Score</p>
+                <p className="text-amber-300 text-xs sm:text-base tabular-nums font-display leading-none" data-testid="text-score">{score}</p>
               </div>
-              <div className="px-3 py-1.5 text-center border-r border-white/[0.04]">
+              <div className="hidden sm:block px-3 py-1.5 text-center border-r border-white/[0.04]">
                 <p className="text-white/25 text-[7px] tracking-[0.2em] uppercase font-display leading-none mb-0.5">Saved</p>
                 <p className="text-emerald-300 text-base tabular-nums font-display leading-none" data-testid="text-collected">{collected}</p>
               </div>
-              <div className="px-3 py-1.5 text-center">
+              <div className="hidden sm:block px-3 py-1.5 text-center">
                 <p className="text-white/25 text-[7px] tracking-[0.2em] uppercase font-display leading-none mb-0.5">Purified</p>
                 <p className="text-orange-300 text-base tabular-nums font-display leading-none" data-testid="text-destroyed">{destroyed}</p>
               </div>
             </div>
 
             {/* Win Timer */}
-            <div className="px-3 py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] min-w-[100px]">
-              <div className="flex items-center justify-between mb-1">
+            <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] min-w-[70px] sm:min-w-[100px]">
+              <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                 <div className="flex items-center gap-1">
                   <Clock className="w-3 h-3 text-sky-400/70" />
-                  <p className="text-white/30 text-[7px] tracking-[0.2em] uppercase font-display leading-none">Survive</p>
+                  <p className="hidden sm:block text-white/30 text-[7px] tracking-[0.2em] uppercase font-display leading-none">Survive</p>
                 </div>
                 <span className={cn(
                   "text-[10px] tabular-nums font-display",
@@ -683,7 +685,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
 
       {/* Game Stage */}
       <div
-        className="relative w-full max-w-5xl aspect-video rounded-xl overflow-hidden"
+        className="relative w-full h-full sm:h-auto sm:max-w-5xl sm:aspect-video sm:rounded-xl overflow-hidden"
         style={{
           transform: screenShake ? `translate(${(Math.random() - 0.5) * screenShake}px, ${(Math.random() - 0.5) * screenShake}px)` : undefined,
           boxShadow: '0 0 0 1px rgba(255,255,255,0.03), 0 0 120px -30px rgba(74,222,128,0.08), inset 0 0 60px rgba(0,0,0,0.3)'
@@ -1161,6 +1163,30 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
           )}
         </AnimatePresence>
 
+        {/* ===== TOUCH CONTROLS (mobile only) ===== */}
+        <div className="sm:hidden absolute bottom-4 left-0 right-0 z-20 flex justify-between px-4 pointer-events-none"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <button
+            className="pointer-events-auto w-16 h-16 rounded-full bg-white/[0.08] backdrop-blur-md border border-white/[0.12] flex items-center justify-center active:bg-white/[0.18] transition-colors touch-none select-none"
+            onTouchStart={(e) => { e.preventDefault(); touchLeftRef.current = true; }}
+            onTouchEnd={(e) => { e.preventDefault(); touchLeftRef.current = false; }}
+            onTouchCancel={() => { touchLeftRef.current = false; }}
+            data-testid="touch-move-left"
+          >
+            <ChevronLeft className="w-8 h-8 text-white/50" />
+          </button>
+          <button
+            className="pointer-events-auto w-16 h-16 rounded-full bg-white/[0.08] backdrop-blur-md border border-white/[0.12] flex items-center justify-center active:bg-white/[0.18] transition-colors touch-none select-none"
+            onTouchStart={(e) => { e.preventDefault(); touchRightRef.current = true; }}
+            onTouchEnd={(e) => { e.preventDefault(); touchRightRef.current = false; }}
+            onTouchCancel={() => { touchRightRef.current = false; }}
+            data-testid="touch-move-right"
+          >
+            <ChevronRight className="w-8 h-8 text-white/50" />
+          </button>
+        </div>
+
         {/* ===== OVERLAYS ===== */}
 
         {/* Pause */}
@@ -1178,22 +1204,22 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
                 animate={{ scale: 1 }}
                 className="flex flex-col items-center"
               >
-                <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-5">
-                  <Pause className="w-8 h-8 text-white/20" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-3 sm:mb-5">
+                  <Pause className="w-6 h-6 sm:w-8 sm:h-8 text-white/20" />
                 </div>
-                <h2 className="text-3xl font-display text-white/90 mb-1 tracking-[0.3em] uppercase">Paused</h2>
-                <p className="text-white/30 font-body text-xs mb-6">The forest holds its breath</p>
+                <h2 className="text-2xl sm:text-3xl font-display text-white/90 mb-1 tracking-[0.2em] sm:tracking-[0.3em] uppercase">Paused</h2>
+                <p className="text-white/30 font-body text-[10px] sm:text-xs mb-3 sm:mb-6">The forest holds its breath</p>
 
-                <div className="flex gap-4 mb-6">
+                <div className="grid grid-cols-4 gap-1.5 sm:flex sm:gap-4 mb-3 sm:mb-6 w-full max-w-xs sm:max-w-none">
                   {[
                     { label: "Score", value: score, color: "text-amber-300" },
                     { label: "Level", value: level, color: "text-emerald-300" },
-                    { label: "Difficulty", value: diffConfig.label, color: diffConfig.color },
+                    { label: "Diff", value: diffConfig.label, color: diffConfig.color },
                     { label: "Time", value: `${Math.floor(time)}s`, color: "text-white/70" },
                   ].map(s => (
-                    <div key={s.label} className="px-4 py-2 bg-white/[0.03] rounded-lg border border-white/[0.04] text-center min-w-[70px]">
-                      <p className="text-white/20 text-[7px] tracking-[0.3em] uppercase font-display mb-0.5">{s.label}</p>
-                      <p className={`text-lg font-display tabular-nums ${s.color}`}>{s.value}</p>
+                    <div key={s.label} className="px-2 sm:px-4 py-1.5 sm:py-2 bg-white/[0.03] rounded-lg border border-white/[0.04] text-center">
+                      <p className="text-white/20 text-[6px] sm:text-[7px] tracking-[0.2em] sm:tracking-[0.3em] uppercase font-display mb-0.5">{s.label}</p>
+                      <p className={`text-sm sm:text-lg font-display tabular-nums ${s.color}`}>{s.value}</p>
                     </div>
                   ))}
                 </div>
@@ -1212,7 +1238,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
                     EXIT TO HOME
                   </Button>
                 </div>
-                <p className="text-white/15 text-[8px] tracking-[0.3em] uppercase mt-4 font-display">ESC to resume</p>
+                <p className="text-white/15 text-[8px] tracking-[0.3em] uppercase mt-4 font-display hidden sm:block">ESC to resume</p>
               </motion.div>
             </motion.div>
           )}
@@ -1262,16 +1288,16 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
                 initial={{ scale: 0.85, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="flex flex-col items-center max-w-md w-full relative z-10"
+                className="flex flex-col items-center max-w-md w-full relative z-10 px-4"
               >
                 <motion.div
                   initial={{ scale: 0, rotate: -20 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
-                  className="relative mb-4"
+                  className="relative mb-3 sm:mb-4"
                 >
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center border border-amber-700/30 bg-amber-900/30 shadow-[0_0_40px_rgba(180,120,40,0.1)]">
-                    <TreePine className="w-8 h-8 text-amber-600/70" />
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center border border-amber-700/30 bg-amber-900/30 shadow-[0_0_40px_rgba(180,120,40,0.1)]">
+                    <TreePine className="w-6 h-6 sm:w-8 sm:h-8 text-amber-600/70" />
                   </div>
                   <motion.div
                     animate={{ opacity: [0.2, 0.4, 0.2] }}
@@ -1280,29 +1306,29 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
                   />
                 </motion.div>
 
-                <h2 className="text-3xl font-display text-amber-100/80 mb-0.5 tracking-tight">Earth Fell Silent</h2>
-                <p className="text-amber-200/25 font-body text-xs mb-5">The forests wither, but the roots remain. Rise again, Keeper.</p>
+                <h2 className="text-2xl sm:text-3xl font-display text-amber-100/80 mb-0.5 tracking-tight">Earth Fell Silent</h2>
+                <p className="text-amber-200/25 font-body text-[10px] sm:text-xs mb-3 sm:mb-5">The forests wither, but the roots remain. Rise again, Keeper.</p>
 
-                <div className="w-full grid grid-cols-4 gap-2 mb-4">
+                <div className="w-full grid grid-cols-4 gap-1.5 sm:gap-2 mb-3 sm:mb-4">
                   {[
                     { label: "Score", value: score, color: "text-amber-300" },
                     { label: "Saved", value: collected, color: "text-emerald-400/80" },
                     { label: "Purified", value: destroyed, color: "text-orange-300" },
                     { label: "Best Combo", value: `${maxCombo}x`, color: "text-amber-300" },
                   ].map(s => (
-                    <div key={s.label} className="px-2 py-2 rounded-lg border text-center"
+                    <div key={s.label} className="px-1.5 sm:px-2 py-1.5 sm:py-2 rounded-lg border text-center"
                       style={{
                         background: 'rgba(60,40,15,0.3)',
                         borderColor: 'rgba(140,100,40,0.1)'
                       }}
                     >
-                      <p className="text-amber-200/20 text-[7px] tracking-[0.2em] uppercase font-display mb-0.5">{s.label}</p>
-                      <p className={`text-lg font-display tabular-nums ${s.color}`}>{s.value}</p>
+                      <p className="text-amber-200/20 text-[6px] sm:text-[7px] tracking-[0.15em] sm:tracking-[0.2em] uppercase font-display mb-0.5">{s.label}</p>
+                      <p className={`text-sm sm:text-lg font-display tabular-nums ${s.color}`}>{s.value}</p>
                     </div>
                   ))}
                 </div>
 
-                <div className="flex items-center gap-1.5 mb-5 px-3 py-1.5 rounded-lg border"
+                <div className="flex items-center gap-1.5 mb-3 sm:mb-5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border"
                   style={{
                     background: 'rgba(60,40,15,0.25)',
                     borderColor: 'rgba(140,100,40,0.1)'
@@ -1325,14 +1351,14 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
                   </p>
                 </div>
 
-                <div className="flex gap-2">
-                  <Button onClick={resetGame} className="px-5 rounded-lg bg-emerald-700/70 text-white font-display text-xs tracking-widest border border-emerald-600/40"
+                <div className="flex flex-col sm:flex-row gap-2 w-full max-w-[260px]">
+                  <Button onClick={resetGame} className="w-full sm:w-auto px-5 rounded-lg bg-emerald-700/70 text-white font-display text-xs tracking-widest border border-emerald-600/40"
                     data-testid="button-restart-game"
                   >
                     <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                     TRY AGAIN
                   </Button>
-                  <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-amber-200/40 font-display text-xs tracking-widest border border-amber-700/15" data-testid="button-leave-game">
+                  <Button variant="ghost" onClick={onExit} className="w-full sm:w-auto px-5 rounded-lg text-amber-200/40 font-display text-xs tracking-widest border border-amber-700/15" data-testid="button-leave-game">
                     <Home className="w-3.5 h-3.5 mr-1.5" />
                     EXIT
                   </Button>
@@ -1425,15 +1451,15 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
                   initial={{ scale: 0, rotate: -30 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.4 }}
-                  className="relative mb-5"
+                  className="relative mb-3 sm:mb-5"
                 >
-                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center border border-emerald-400/30"
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center border border-emerald-400/30"
                     style={{
                       background: 'linear-gradient(135deg, rgba(6,78,59,0.6) 0%, rgba(22,101,52,0.4) 100%)',
                       boxShadow: '0 0 60px rgba(74,222,128,0.2), 0 0 120px rgba(74,222,128,0.1)'
                     }}
                   >
-                    <Crown className="w-10 h-10 text-amber-400" style={{ filter: 'drop-shadow(0 0 12px rgba(250,204,21,0.4))' }} />
+                    <Crown className="w-8 h-8 sm:w-10 sm:h-10 text-amber-400" style={{ filter: 'drop-shadow(0 0 12px rgba(250,204,21,0.4))' }} />
                   </div>
                   <motion.div
                     animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0, 0.3] }}
@@ -1448,15 +1474,15 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
                   transition={{ delay: 0.6 }}
                 >
                   <p className="text-[10px] tracking-[0.5em] uppercase font-display text-emerald-400/50 mb-2">Congratulations</p>
-                  <h2 className="text-3xl md:text-4xl font-display text-emerald-50/95 mb-1 tracking-tight">Earth is Saved</h2>
-                  <p className="text-emerald-300/50 font-body text-sm mb-6">The skies are clear. Nature breathes again, thanks to you, Keeper.</p>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-display text-emerald-50/95 mb-1 tracking-tight">Earth is Saved</h2>
+                  <p className="text-emerald-300/50 font-body text-xs sm:text-sm mb-4 sm:mb-6">The skies are clear. Nature breathes again, thanks to you, Keeper.</p>
                 </motion.div>
 
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.8 }}
-                  className="w-full grid grid-cols-4 gap-2 mb-4"
+                  className="w-full grid grid-cols-4 gap-1.5 sm:gap-2 mb-3 sm:mb-4"
                 >
                   {[
                     { label: "Score", value: score, color: "text-amber-300" },
@@ -1464,14 +1490,14 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
                     { label: "Purified", value: destroyed, color: "text-orange-300" },
                     { label: "Best Combo", value: `${maxCombo}x`, color: "text-amber-300" },
                   ].map(s => (
-                    <div key={s.label} className="px-2 py-2 rounded-lg border text-center"
+                    <div key={s.label} className="px-1.5 sm:px-2 py-1.5 sm:py-2 rounded-lg border text-center"
                       style={{
                         background: 'rgba(6,60,40,0.35)',
                         borderColor: 'rgba(74,222,128,0.1)'
                       }}
                     >
-                      <p className="text-emerald-200/25 text-[7px] tracking-[0.2em] uppercase font-display mb-0.5">{s.label}</p>
-                      <p className={`text-lg font-display tabular-nums ${s.color}`}>{s.value}</p>
+                      <p className="text-emerald-200/25 text-[6px] sm:text-[7px] tracking-[0.15em] sm:tracking-[0.2em] uppercase font-display mb-0.5">{s.label}</p>
+                      <p className={`text-sm sm:text-lg font-display tabular-nums ${s.color}`}>{s.value}</p>
                     </div>
                   ))}
                 </motion.div>
@@ -1512,20 +1538,20 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1.3 }}
-                  className="flex gap-2"
+                  className="flex flex-col sm:flex-row gap-2 w-full max-w-[260px]"
                 >
                   <Button onClick={() => {
                     if (soundEnabled) {
                       speakVillain("You think you've won, little keeper? Let's see how well you truly know your precious Earth.");
                     }
                     setShowQuiz(true);
-                  }} className="px-5 rounded-lg bg-purple-700/60 text-white font-display text-xs tracking-widest border border-purple-500/30"
+                  }} className="w-full sm:w-auto px-5 rounded-lg bg-purple-700/60 text-white font-display text-xs tracking-widest border border-purple-500/30"
                     data-testid="button-face-malakar"
                   >
                     <Skull className="w-3.5 h-3.5 mr-1.5" />
                     FACE MALAKAR
                   </Button>
-                  <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-emerald-200/40 font-display text-xs tracking-widest border border-emerald-500/10" data-testid="button-victory-exit">
+                  <Button variant="ghost" onClick={onExit} className="w-full sm:w-auto px-5 rounded-lg text-emerald-200/40 font-display text-xs tracking-widest border border-emerald-500/10" data-testid="button-victory-exit">
                     <Home className="w-3.5 h-3.5 mr-1.5" />
                     EXIT
                   </Button>
@@ -1548,7 +1574,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }) {
       </AnimatePresence>
 
       {/* Bottom hints */}
-      <div className="mt-3 flex items-center gap-4 text-white/15 font-display text-[8px] tracking-[0.3em] uppercase flex-wrap justify-center">
+      <div className="mt-3 hidden sm:flex items-center gap-4 text-white/15 font-display text-[8px] tracking-[0.3em] uppercase flex-wrap justify-center">
         <div className="flex items-center gap-1">
           <kbd className="px-1 py-0.5 bg-white/[0.04] border border-white/[0.06] rounded text-[7px] tabular-nums">A/D</kbd>
           <span>Move</span>

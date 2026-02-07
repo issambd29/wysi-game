@@ -67,13 +67,13 @@ export function DifficultySelect({ onSelect, onBack }) {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.6 }}
-        className="text-center mb-10 relative z-10"
+        className="text-center mb-6 sm:mb-10 relative z-10 px-4"
       >
-        <h2 className="text-3xl md:text-4xl font-display text-white/90 tracking-tight mb-2">Choose Your Path</h2>
-        <p className="text-white/35 font-body text-sm">How will you face the pollution storm?</p>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-display text-white/90 tracking-tight mb-2">Choose Your Path</h2>
+        <p className="text-white/35 font-body text-xs sm:text-sm">How will you face the pollution storm?</p>
       </motion.div>
 
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6 px-4 relative z-10 max-w-3xl w-full">
+      <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:gap-6 px-4 relative z-10 max-w-3xl w-full">
         {DIFFICULTIES.map((d, i) => (
           <motion.button
             key={d.id}
@@ -81,7 +81,7 @@ export function DifficultySelect({ onSelect, onBack }) {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 + i * 0.15, duration: 0.5 }}
             onClick={() => onSelect(d.id)}
-            className={`flex-1 flex flex-col items-center p-6 md:p-8 rounded-xl border ${d.borderColor} backdrop-blur-sm hover-elevate active-elevate-2 cursor-pointer`}
+            className={`flex-1 flex flex-row md:flex-col items-center gap-3 md:gap-0 p-4 sm:p-5 md:p-8 rounded-xl border ${d.borderColor} backdrop-blur-sm hover-elevate active-elevate-2 cursor-pointer`}
             style={{
               background: d.bgColor,
               boxShadow: `0 0 30px ${d.glowColor}`,
@@ -89,13 +89,15 @@ export function DifficultySelect({ onSelect, onBack }) {
             data-testid={`button-difficulty-${d.id}`}
           >
             <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center mb-4 border border-white/[0.06]"
+              className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center md:mb-4 border border-white/[0.06] flex-shrink-0"
               style={{ background: "rgba(0,0,0,0.3)" }}
             >
-              <d.Icon className={`w-7 h-7 ${d.color}`} style={{ filter: d.iconGlow }} />
+              <d.Icon className={`w-5 h-5 sm:w-7 sm:h-7 ${d.color}`} style={{ filter: d.iconGlow }} />
             </div>
-            <h3 className={`text-lg font-display ${d.color} tracking-wide mb-1`}>{d.title}</h3>
-            <p className="text-white/30 text-xs font-body leading-relaxed text-center">{d.desc}</p>
+            <div className="text-left md:text-center">
+              <h3 className={`text-base sm:text-lg font-display ${d.color} tracking-wide mb-0.5 sm:mb-1`}>{d.title}</h3>
+              <p className="text-white/30 text-[11px] sm:text-xs font-body leading-relaxed">{d.desc}</p>
+            </div>
           </motion.button>
         ))}
       </div>
@@ -104,7 +106,7 @@ export function DifficultySelect({ onSelect, onBack }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
-        className="mt-8 relative z-10"
+        className="mt-6 sm:mt-8 relative z-10"
       >
         <Button
           variant="ghost"
@@ -117,7 +119,9 @@ export function DifficultySelect({ onSelect, onBack }) {
         </Button>
       </motion.div>
 
-      <p className="absolute bottom-6 text-white/10 text-[9px] font-display tracking-[0.4em] uppercase">
+      <p className="absolute bottom-6 text-white/10 text-[8px] sm:text-[9px] font-display tracking-[0.4em] uppercase"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         Nature gives you one chance. Protect it.
       </p>
     </motion.div>
