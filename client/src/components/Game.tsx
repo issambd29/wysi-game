@@ -808,6 +808,60 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
             }}
           />
 
+          {/* Grass blades */}
+          {health > 30 && (
+            <div className="absolute bottom-[8%] left-0 right-0 h-[5%] pointer-events-none overflow-hidden">
+              <svg viewBox="0 0 1200 40" className="w-full h-full" preserveAspectRatio="none">
+                {[...Array(60)].map((_, i) => {
+                  const x = i * 20 + (i % 3) * 5;
+                  const h = 12 + (i % 5) * 6;
+                  const sway = Math.sin(bgOffset * 0.5 + i * 0.7) * 3;
+                  const col = health > 50
+                    ? `rgba(${34 + (i % 3) * 10},${140 + (i % 4) * 20},${80 + (i % 3) * 10},${0.25 + (i % 5) * 0.05})`
+                    : `rgba(${80 + (i % 3) * 10},${70 + (i % 4) * 10},${30},${0.15 + (i % 5) * 0.03})`;
+                  return (
+                    <line key={`grass-${i}`} x1={x} y1={40} x2={x + sway} y2={40 - h} stroke={col} strokeWidth={i % 4 === 0 ? 2 : 1} strokeLinecap="round" />
+                  );
+                })}
+              </svg>
+            </div>
+          )}
+
+          {/* Aurora / Nature glow in upper sky */}
+          {health > 60 && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-[30%]" style={{
+                background: `linear-gradient(180deg, rgba(74,222,128,${0.02 + Math.sin(bgOffset * 0.15) * 0.01}) 0%, transparent 100%)`,
+              }} />
+              <div className="absolute top-0 left-[20%] w-[30%] h-[20%]" style={{
+                background: `radial-gradient(ellipse, rgba(56,189,248,${0.015 + Math.sin(bgOffset * 0.2 + 1) * 0.008}) 0%, transparent 70%)`,
+                filter: 'blur(8px)'
+              }} />
+              <div className="absolute top-0 right-[15%] w-[25%] h-[18%]" style={{
+                background: `radial-gradient(ellipse, rgba(167,139,250,${0.012 + Math.sin(bgOffset * 0.18 + 2) * 0.006}) 0%, transparent 70%)`,
+                filter: 'blur(10px)'
+              }} />
+            </div>
+          )}
+
+          {/* Falling leaves */}
+          {health > 45 && [...Array(6)].map((_, i) => (
+            <motion.div
+              key={`leaf-${i}`}
+              animate={{
+                y: [-(20 + i * 10), 300],
+                x: [0, Math.sin(i * 1.2) * 60, Math.cos(i * 0.8) * -40, Math.sin(i * 2) * 50],
+                rotate: [0, 360, 180, 540],
+                opacity: [0, 0.3, 0.25, 0]
+              }}
+              transition={{ repeat: Infinity, duration: 10 + i * 2.5, ease: "linear", delay: i * 1.8 }}
+              className="absolute z-[2] pointer-events-none"
+              style={{ left: `${8 + i * 15}%`, top: '5%' }}
+            >
+              <Leaf className={`w-2.5 h-2.5 ${health > 60 ? 'text-emerald-400/20' : 'text-amber-500/15'}`} />
+            </motion.div>
+          ))}
+
           {/* Light shafts */}
           {health > 50 && (
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
