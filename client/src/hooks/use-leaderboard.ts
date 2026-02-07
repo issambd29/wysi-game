@@ -5,37 +5,44 @@ import { db } from "@/lib/firebase";
 export interface LeaderboardEntry {
   id: string;
   nickname: string;
-  score: number; // Assuming we might track a score or just use visit time as a placeholder
-  lastVisit: number;
+  score: number;
+  level: number;
+  levelName: string;
+  difficulty: string;
+  maxCombo: number;
+  time: number;
+  timestamp: number;
 }
 
 export function useLeaderboard() {
   return useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
-      // For this demo, since we don't have game scores yet, we'll fetch recent users
-      // In a real game, this would query by 'score'
-      const recentUsersQuery = query(
-        ref(db, "users"), 
-        orderByChild("lastVisit"), 
-        limitToLast(10)
+      const scoresQuery = query(
+        ref(db, "scores"),
+        orderByChild("score"),
+        limitToLast(20)
       );
-      
-      const snapshot = await get(recentUsersQuery);
-      
+
+      const snapshot = await get(scoresQuery);
+
       if (!snapshot.exists()) return [];
-      
+
       const data = snapshot.val();
-      const entries: LeaderboardEntry[] = Object.entries(data).map(([id, user]: [string, any]) => ({
+      const entries: LeaderboardEntry[] = Object.entries(data).map(([id, record]: [string, any]) => ({
         id,
-        nickname: user.nickname,
-        score: Math.floor(Math.random() * 1000) + 100, // Mock score for visual
-        lastVisit: user.lastVisit
+        nickname: record.nickname || "Unknown",
+        score: record.score || 0,
+        level: record.level || 1,
+        levelName: record.levelName || "Awakening",
+        difficulty: record.difficulty || "normal",
+        maxCombo: record.maxCombo || 0,
+        time: record.time || 0,
+        timestamp: record.timestamp || 0,
       }));
-      
-      // Sort by mock score descending
+
       return entries.sort((a, b) => b.score - a.score);
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 30,
   });
 }
