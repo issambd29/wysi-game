@@ -1,7 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Skull, CircleCheck, CircleX, RotateCcw, Home, Sparkles, Globe, AlertTriangle } from "lucide-react";
+import { GameSounds, speakVillain, stopVillainSpeech } from "@/lib/sounds";
 
 interface MalakarQuizProps {
   onPass: () => void;
@@ -54,17 +55,41 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }: MalakarQuizProps) {
   const narrativePages = [
     {
       text: "Darkness swallowed you whole. When you opened your eyes, you found yourself in a twisted, shimmering dimension of floating rocks and violet skies.",
+      speech: "Darkness swallowed you whole. A twisted dimension of floating rocks and violet skies.",
     },
     {
       text: '"You defeated me, hero," he rasped, his voice echoing in the strange space. "But as I fell, I realized something... true victory without struggle tastes like ashes. Empty. Bitter."',
+      speech: "You defeated me, hero. But as I fell, I realized something. True victory without struggle tastes like ashes. Empty. Bitter.",
     },
     {
       text: '"I could simply destroy you now. But where\'s the flavor in that? Instead, let\'s play a final game. You fought so hard for Earth\u2014let\'s see how well you actually know it."',
+      speech: "I could simply destroy you now. But where's the flavor in that? Let's play a final game. Let's see how well you actually know Earth.",
     },
     {
       text: '"Five questions about the world you sacrificed so much to save. Answer four correctly, and I\'ll return you to your precious Earth. But... if you miss even two... you\'ll remain here with me forever."',
+      speech: "Five questions about the world you sacrificed so much to save. Answer four correctly, and I'll return you. Miss even two, and you remain here forever.",
     },
   ];
+
+  useEffect(() => {
+    if (phase === "narrative") {
+      speakVillain(narrativePages[narrativePage].speech);
+    }
+    return () => stopVillainSpeech();
+  }, [narrativePage, phase]);
+
+  useEffect(() => {
+    if (phase === "result") {
+      if (passed) {
+        GameSounds.quizPass();
+        setTimeout(() => speakVillain("Impossible! You actually know your precious Earth. Fine, go. But I will return, keeper."), 600);
+      } else {
+        GameSounds.quizFail();
+        setTimeout(() => speakVillain("Ha ha ha! You fought for a world you barely understand. Welcome to your new home, keeper."), 600);
+      }
+    }
+    return () => stopVillainSpeech();
+  }, [phase, passed]);
 
   const handleAnswer = useCallback((index: number) => {
     if (answerRevealed) return;
@@ -72,6 +97,12 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }: MalakarQuizProps) {
     setAnswerRevealed(true);
 
     const isCorrect = index === questions[currentQ].correctIndex;
+    if (isCorrect) {
+      GameSounds.quizCorrect();
+    } else {
+      GameSounds.quizWrong();
+      setTimeout(() => speakVillain("Wrong!"), 300);
+    }
     const newCorrect = correctCount + (isCorrect ? 1 : 0);
     const newWrong = wrongCount + (isCorrect ? 0 : 1);
 
@@ -168,6 +199,8 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }: MalakarQuizProps) {
 
             <Button
               onClick={() => {
+                stopVillainSpeech();
+                GameSounds.buttonClick();
                 if (narrativePage < narrativePages.length - 1) {
                   setNarrativePage(p => p + 1);
                 } else {

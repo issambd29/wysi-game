@@ -1562,7 +1562,12 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
                   transition={{ delay: 1.3 }}
                   className="flex gap-2"
                 >
-                  <Button onClick={() => setShowQuiz(true)} className="px-5 rounded-lg bg-purple-700/60 text-white font-display text-xs tracking-widest border border-purple-500/30"
+                  <Button onClick={() => {
+                    if (soundEnabled) {
+                      speakVillain("You think you've won, little keeper? Let's see how well you truly know your precious Earth.");
+                    }
+                    setShowQuiz(true);
+                  }} className="px-5 rounded-lg bg-purple-700/60 text-white font-display text-xs tracking-widest border border-purple-500/30"
                     data-testid="button-face-malakar"
                   >
                     <Skull className="w-3.5 h-3.5 mr-1.5" />
