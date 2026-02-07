@@ -29,11 +29,12 @@ const STORY_BEATS: StoryBeat[] = [
   {
     id: "threat",
     lines: [
-      "A villain from a dying world",
-      "turned garbage into a weapon.",
+      "Dr. Alistair Malakar.",
+      "Last ruler of a dead world.",
       "",
-      "Earth refused his ransom.",
-      "Now trash rains from the sky.",
+      "He turned garbage into a weapon",
+      "and aimed it at Earth.",
+      "The sky began to fall.",
     ],
     bg: "radial-gradient(ellipse at 50% 40%, hsl(0, 15%, 8%) 0%, hsl(350, 10%, 4%) 60%, #000 100%)",
     particleColor: "rgba(200,60,40,0.15)",
@@ -47,12 +48,13 @@ const STORY_BEATS: StoryBeat[] = [
   {
     id: "keeper",
     lines: [
+      "Deep within its core,",
       "Earth awakened its last protector.",
       "",
       "You.",
       "",
       "No medals. No fame.",
-      "Just a mission to protect.",
+      "Just a silent oath to defend life.",
     ],
     bg: "radial-gradient(ellipse at 50% 50%, hsl(150, 30%, 8%) 0%, hsl(140, 20%, 4%) 60%, #000 100%)",
     particleColor: "rgba(74,222,128,0.2)",
@@ -66,9 +68,11 @@ const STORY_BEATS: StoryBeat[] = [
   {
     id: "call",
     lines: [
+      "Malakar rains his poison.",
+      "You stand between sky and soil.",
+      "",
       "Every piece you destroy",
       "gives Earth another breath.",
-      "",
       "The keeper never stops.",
     ],
     bg: "radial-gradient(ellipse at 50% 50%, hsl(150, 35%, 10%) 0%, hsl(140, 25%, 5%) 40%, #000 100%)",
