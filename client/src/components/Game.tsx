@@ -69,9 +69,9 @@ const LEVEL_NAMES = [
 const LEVEL_THRESHOLDS = [0, 300, 750, 1500, 2500, 4000, 6000, 8500, 12000, 16000];
 
 const DIFFICULTY_CONFIG = {
-  easy: { speedMult: 0.75, spawnMult: 1.3, toxicBase: 0.12, toxicScale: 0.04, damageMult: 0.8, healMult: 1.0, label: "Calm Nature", Icon: Leaf, color: "text-emerald-400", winTime: 180 },
-  normal: { speedMult: 1.1, spawnMult: 0.85, toxicBase: 0.2, toxicScale: 0.06, damageMult: 1.2, healMult: 0.6, label: "Balanced Earth", Icon: Globe, color: "text-sky-400", winTime: 150 },
-  hard: { speedMult: 1.5, spawnMult: 0.55, toxicBase: 0.32, toxicScale: 0.08, damageMult: 1.6, healMult: 0.3, label: "Nature in Crisis", Icon: Flame, color: "text-orange-400", winTime: 120 },
+  easy: { speedMult: 0.75, spawnMult: 1.3, toxicBase: 0.12, toxicScale: 0.04, damageMult: 0.8, healMult: 1.0, label: "Calm Nature", Icon: Leaf, color: "text-emerald-400", winTime: 60 },
+  normal: { speedMult: 1.1, spawnMult: 0.85, toxicBase: 0.2, toxicScale: 0.06, damageMult: 1.2, healMult: 0.6, label: "Balanced Earth", Icon: Globe, color: "text-sky-400", winTime: 60 },
+  hard: { speedMult: 1.5, spawnMult: 0.55, toxicBase: 0.32, toxicScale: 0.08, damageMult: 1.6, healMult: 0.3, label: "Nature in Crisis", Icon: Flame, color: "text-orange-400", winTime: 60 },
 };
 
 export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
