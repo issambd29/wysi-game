@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ref, get, query, limitToLast, orderByChild } from "firebase/database";
+import { ref, get } from "firebase/database";
 import { db } from "@/lib/firebase";
 
 export interface LeaderboardEntry {
@@ -18,13 +18,7 @@ export function useLeaderboard() {
   return useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
-      const scoresQuery = query(
-        ref(db, "scores"),
-        orderByChild("score"),
-        limitToLast(20)
-      );
-
-      const snapshot = await get(scoresQuery);
+      const snapshot = await get(ref(db, "scores"));
 
       if (!snapshot.exists()) return [];
 
@@ -41,7 +35,7 @@ export function useLeaderboard() {
         timestamp: record.timestamp || 0,
       }));
 
-      return entries.sort((a, b) => b.score - a.score);
+      return entries.sort((a, b) => b.score - a.score).slice(0, 20);
     },
     staleTime: 1000 * 30,
   });
