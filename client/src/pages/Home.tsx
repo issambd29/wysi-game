@@ -8,6 +8,7 @@ import { DifficultySelect, type Difficulty } from "@/components/DifficultySelect
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
 import { Link } from "wouter";
+import wysiLogo from "@assets/wysi_1770457280661.png";
 
 type GamePhase = "home" | "intro" | "difficulty" | "playing";
 
@@ -104,9 +105,12 @@ export default function Home() {
           transition={{ delay: 0.3, duration: 0.8 }}
           className="space-y-4"
         >
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-display font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
-            EARTH<br />KEEPER
-          </h1>
+          <img
+            src={wysiLogo}
+            alt="WYSI"
+            className="w-48 md:w-64 lg:w-80 mx-auto drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+            data-testid="img-logo"
+          />
           <p className="text-lg md:text-2xl font-body text-accent/90 max-w-2xl mx-auto leading-relaxed tracking-wide text-shadow-glow">
             A silent war. A secret protector. The planet's last chance.
           </p>

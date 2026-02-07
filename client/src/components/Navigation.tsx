@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Home, Gamepad2, Trophy, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import wysiLogo from "@assets/wysi_1770457280661.png";
 
 export function Navigation() {
   const [location] = useLocation();
@@ -21,6 +22,9 @@ export function Navigation() {
       className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4"
     >
       <div className="glass-panel rounded-full px-6 py-3 flex items-center space-x-2 md:space-x-8">
+        <Link href="/" className="shrink-0 mr-1 md:mr-2">
+          <img src={wysiLogo} alt="WYSI" className="w-8 h-8 object-contain" data-testid="img-nav-logo" />
+        </Link>
         {links.map((link) => {
           const isActive = location === link.href;
           const Icon = link.icon;
