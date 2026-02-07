@@ -2,14 +2,17 @@
 
 ## Overview
 
-Earth Keeper is an immersive, nature-themed game gateway website where players act as guardians of nature. The app serves as a cinematic landing experience before entering the game world, featuring:
+Earth Keeper is an immersive, nature-themed 2D arcade game where players act as guardians of nature, cleaning pollution from the sky. Features include:
 
-- A visually rich home page with animated background effects (floating particles, light shafts)
-- Player profile creation and persistence via Firebase Realtime Database
-- A simple in-browser "pollution cleaning" mini-game
-- Story/lore page with animated text reveals
-- Controls/instructions page
-- Leaderboard pulling data from Firebase
+- Cinematic story intro (4-scene animated sequence: nature → pollution → darkness → keeper awakens)
+- Difficulty selection (Calm Nature / Balanced Earth / Nature in Crisis)
+- Full 2D arcade game with auto-shooting, A/D movement, garbage container collection, 4 power-up types
+- Wind weather effects pushing garbage, combo multiplier system, screen shake on damage
+- 10 named levels (Awakening → Gaia's Chosen), progressive difficulty scaling
+- Glassmorphism HUD with health, score, level progress, difficulty badge, wind indicator, combo display
+- Pause menu with Resume, Restart Level, Exit to Home
+- Player profile creation via Firebase Realtime Database
+- Story/lore page, controls page, leaderboard from Firebase
 
 The project uses a full-stack TypeScript architecture with an Express backend and React frontend, though the primary data layer is Firebase (not the PostgreSQL database). The Postgres database and Drizzle ORM are scaffolded but minimally used — Firebase handles player profiles and leaderboard data on the client side.
 

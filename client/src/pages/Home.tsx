@@ -3,35 +3,81 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useGameProfile } from "@/hooks/use-game-profile";
 import { ProfileModal } from "@/components/ProfileModal";
 import { Game } from "@/components/Game";
+import { CinematicIntro } from "@/components/CinematicIntro";
+import { DifficultySelect, type Difficulty } from "@/components/DifficultySelect";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 
+type GamePhase = "home" | "intro" | "difficulty" | "playing";
+
 export default function Home() {
   const { profile, loading, createProfile } = useGameProfile();
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [phase, setPhase] = useState<GamePhase>("home");
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
 
   const handleEnterWorld = () => {
     if (!profile) {
       setShowProfileModal(true);
     } else {
-      setIsPlaying(true);
+      setPhase("intro");
     }
+  };
+
+  const handleProfileCreated = async (nickname: string) => {
+    await createProfile(nickname);
+    setShowProfileModal(false);
+    setPhase("intro");
+  };
+
+  const handleIntroComplete = () => {
+    setPhase("difficulty");
+  };
+
+  const handleDifficultySelect = (d: Difficulty) => {
+    setDifficulty(d);
+    setPhase("playing");
+  };
+
+  const handleExitGame = () => {
+    setPhase("home");
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative px-4 text-center overflow-hidden">
       <AnimatePresence>
-        {isPlaying && profile && (
-          <Game nickname={profile.nickname} onExit={() => setIsPlaying(false)} />
+        {phase === "intro" && (
+          <CinematicIntro
+            onComplete={handleIntroComplete}
+            onSkip={handleIntroComplete}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {phase === "difficulty" && (
+          <DifficultySelect
+            onSelect={handleDifficultySelect}
+            onBack={() => setPhase("home")}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {phase === "playing" && profile && (
+          <Game
+            nickname={profile.nickname}
+            onExit={handleExitGame}
+            difficulty={difficulty}
+          />
         )}
       </AnimatePresence>
 
       <ProfileModal 
         isOpen={showProfileModal} 
         onClose={() => setShowProfileModal(false)}
-        onSubmit={createProfile}
+        onSubmit={handleProfileCreated}
       />
 
       <motion.div
@@ -40,7 +86,6 @@ export default function Home() {
         transition={{ duration: 1 }}
         className="relative z-10 max-w-4xl mx-auto space-y-8"
       >
-        {/* Brand / Title */}
         <motion.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -55,7 +100,6 @@ export default function Home() {
           </p>
         </motion.div>
 
-        {/* User Greeting if logged in */}
         {!loading && profile && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -75,31 +119,30 @@ export default function Home() {
           </motion.div>
         )}
 
-        {/* Actions */}
         <motion.div 
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.8 }}
           className="flex flex-col md:flex-row items-center justify-center gap-6 pt-8"
         >
-          {/* Primary Action */}
           <Button
+            size="lg"
             onClick={handleEnterWorld}
-            className="group relative px-8 py-8 md:px-12 rounded-full text-xl font-display tracking-widest overflow-hidden bg-primary/20 hover:bg-primary/30 border border-primary/50 shadow-[0_0_40px_-10px_rgba(74,222,128,0.3)] transition-all duration-500 hover:scale-105"
+            className="group relative rounded-full text-xl font-display tracking-widest overflow-hidden bg-primary/20 border border-primary/50 shadow-[0_0_40px_-10px_rgba(74,222,128,0.3)]"
+            data-testid="button-enter-world"
           >
-            <span className="relative z-10 flex items-center gap-3 text-white group-hover:text-white">
+            <span className="relative z-10 flex items-center gap-3 text-white">
               {profile ? "Continue Journey" : "Enter the World"}
-              <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-6 h-6" />
             </span>
-            {/* Animated glow background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/40 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
           </Button>
 
-          {/* Secondary Action */}
           <Link href="/story">
             <Button
+              size="lg"
               variant="outline"
-              className="px-8 py-8 md:px-12 rounded-full text-xl font-display tracking-widest bg-transparent border-white/20 hover:bg-white/5 hover:border-accent/50 text-white/80 hover:text-accent transition-all duration-300"
+              className="rounded-full text-xl font-display tracking-widest bg-transparent border-white/20 text-white/80"
+              data-testid="button-story"
             >
               <span className="flex items-center gap-3">
                 The Story
@@ -110,8 +153,6 @@ export default function Home() {
         </motion.div>
       </motion.div>
 
-      {/* Hero Background Image (Unsplash) */}
-      {/* Cinematic forest landscape with light rays */}
       <div className="fixed inset-0 z-0 opacity-40">
         <img 
           src="https://images.unsplash.com/photo-1511497584788-876760111969?q=80&w=2832&auto=format&fit=crop"
