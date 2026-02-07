@@ -154,40 +154,40 @@ export default function Story() {
       />
       <div className="fixed inset-0 z-[-1] bg-black/40" />
 
-      <div className="relative z-10 max-w-2xl mx-auto px-6 pt-20 pb-28">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-28">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2 }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
         >
-          <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-6"
+          <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-4 sm:mb-6"
             style={{
               background: "radial-gradient(circle, rgba(74,222,128,0.15) 0%, transparent 70%)",
               boxShadow: "0 0 50px rgba(74,222,128,0.1), 0 0 15px rgba(74,222,128,0.05)",
             }}
           >
-            <BookOpen className="w-7 h-7 text-emerald-400/60" />
+            <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-400/60" />
           </div>
 
-          <p className="text-[10px] md:text-xs font-sans uppercase tracking-[0.5em] text-emerald-400/40 mb-4">
+          <p className="text-[10px] md:text-xs font-sans uppercase tracking-[0.5em] text-emerald-400/40 mb-3 sm:mb-4">
             The Lore of Earth Keeper
           </p>
 
-          <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight mb-3">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-display font-bold tracking-tight mb-2 sm:mb-3">
             <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/50">A Silent War</span>
           </h1>
-          <p className="text-xl md:text-2xl font-display text-white/25 tracking-[0.15em] italic mb-8">
+          <p className="text-lg sm:text-xl md:text-2xl font-display text-white/25 tracking-[0.15em] italic mb-6 sm:mb-8">
             for a Living Planet
           </p>
 
-          <div className="flex items-center justify-center gap-3 mb-8">
+          <div className="flex items-center justify-center gap-3 mb-6 sm:mb-8">
             <div className="w-12 h-px bg-gradient-to-r from-transparent to-emerald-500/30" />
             <Leaf className="w-3 h-3 text-emerald-500/30" />
             <div className="w-12 h-px bg-gradient-to-l from-transparent to-emerald-500/30" />
           </div>
 
-          <p className="text-white/30 font-body text-base md:text-lg leading-loose max-w-md mx-auto italic">
+          <p className="text-white/30 font-body text-sm sm:text-base md:text-lg leading-loose max-w-md mx-auto italic px-2">
             Somewhere beyond the stars, a dying world turned its rage toward Earth.
             This is the story of how the planet chose its secret protector, and the silent war
             that no one was ever meant to see.
@@ -195,9 +195,9 @@ export default function Story() {
         </motion.div>
 
         <div className="relative">
-          <div className="absolute left-[19px] top-0 bottom-0 w-px bg-gradient-to-b from-white/[0.06] via-white/[0.04] to-transparent" />
+          <div className="absolute left-[19px] top-0 bottom-0 w-px bg-gradient-to-b from-white/[0.06] via-white/[0.04] to-transparent hidden sm:block" />
 
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {STORY_SECTIONS.map((section, sIdx) => {
               const SectionIcon = section.icon;
               return (
@@ -208,23 +208,23 @@ export default function Story() {
                   transition={{ delay: 0.3 + sIdx * 0.1, duration: 0.6 }}
                   className="relative"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="relative z-10 flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border border-white/[0.08]"
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="relative z-10 flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border border-white/[0.08]"
                       style={{
                         background: `radial-gradient(circle, ${section.iconGlow} 0%, rgba(0,0,0,0.6) 100%)`,
                         boxShadow: `0 0 20px ${section.iconGlow}`,
                       }}
                     >
-                      <SectionIcon className={`w-4 h-4 ${section.iconColor}`} />
+                      <SectionIcon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${section.iconColor}`} />
                     </div>
 
-                    <div className={`flex-1 rounded-xl p-5 md:p-6 bg-white/[0.02] backdrop-blur-sm border ${section.borderColor}`}
+                    <div className={`flex-1 rounded-xl p-4 sm:p-5 md:p-6 bg-white/[0.02] backdrop-blur-sm border ${section.borderColor}`}
                       style={{
                         boxShadow: `inset 0 1px 0 rgba(255,255,255,0.03), 0 4px 24px rgba(0,0,0,0.2)`,
                       }}
                     >
-                      <h2 className="text-lg md:text-xl font-display text-white/75 tracking-tight mb-4">{section.title}</h2>
-                      <div className="space-y-3">
+                      <h2 className="text-base sm:text-lg md:text-xl font-display text-white/75 tracking-tight mb-3 sm:mb-4">{section.title}</h2>
+                      <div className="space-y-2.5 sm:space-y-3">
                         {section.paragraphs.map((p, pIdx) => {
                           const isQuote = p.startsWith("\"");
                           const isHighlight = p === "You were chosen because you care. Because when you see a river choked with waste, something inside you aches. Because when you see a forest burning, you feel it in your bones. The planet knows its own." || p === "But Earth was not defenseless. Not truly." || p === "It needed its keeper." || p === "And the keeper never stops.";
@@ -233,10 +233,10 @@ export default function Story() {
                               key={pIdx}
                               className={
                                 isQuote
-                                  ? "text-sm md:text-base font-body text-amber-300/60 leading-relaxed italic pl-3 border-l-2 border-amber-400/20"
+                                  ? "text-xs sm:text-sm md:text-base font-body text-amber-300/60 leading-relaxed italic pl-3 border-l-2 border-amber-400/20"
                                   : isHighlight
-                                  ? "text-sm md:text-base font-display text-emerald-300/70 leading-relaxed"
-                                  : "text-sm md:text-base font-body text-white/40 leading-relaxed"
+                                  ? "text-xs sm:text-sm md:text-base font-display text-emerald-300/70 leading-relaxed"
+                                  : "text-xs sm:text-sm md:text-base font-body text-white/40 leading-relaxed"
                               }
                               data-testid={`text-story-paragraph-${sIdx}-${pIdx}`}
                             >
@@ -257,7 +257,7 @@ export default function Story() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.8, duration: 1 }}
-          className="mt-20 flex flex-col items-center"
+          className="mt-14 sm:mt-20 flex flex-col items-center"
         >
           <div className="w-10 h-10 rounded-full flex items-center justify-center mb-6"
             style={{
@@ -268,10 +268,10 @@ export default function Story() {
           </div>
 
           <div className="text-center mb-8">
-            <p className="text-emerald-300/50 font-body text-base italic leading-relaxed">
+            <p className="text-emerald-300/50 font-body text-sm sm:text-base italic leading-relaxed">
               Earth does not need a hero seeking glory.
             </p>
-            <p className="text-emerald-300/50 font-body text-base italic leading-relaxed">
+            <p className="text-emerald-300/50 font-body text-sm sm:text-base italic leading-relaxed">
               It needs a keeper who never stops.
             </p>
           </div>

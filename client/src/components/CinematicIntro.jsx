@@ -200,14 +200,14 @@ export function CinematicIntro({ onComplete, onSkip }) {
             className="absolute"
             style={{ top: "12%", left: "50%", transform: "translate(-50%, -50%)" }}
           >
-            <Icon className={`w-14 h-14 ${beat.iconColor}`} style={{ filter: "drop-shadow(0 0 20px currentColor)" }} />
+            <Icon className={`w-10 h-10 sm:w-14 sm:h-14 ${beat.iconColor}`} style={{ filter: "drop-shadow(0 0 20px currentColor)" }} />
           </motion.div>
 
-          <div className="relative z-10 flex flex-col items-center gap-6 max-w-xl px-6 w-full">
+          <div className="relative z-10 flex flex-col items-center gap-4 sm:gap-6 max-w-xl px-4 sm:px-6 w-full">
             <div className="text-center">
               {beat.lines.map((line, i) => {
                 if (i >= visibleLines) return null;
-                if (line === "") return <div key={i} className="h-3" />;
+                if (line === "") return <div key={i} className="h-2 sm:h-3" />;
 
                 const isEmphasis = line === "You." || line.startsWith("Now trash rains");
                 const isFinal = isLastBeat && line.includes("keeper never stops");
@@ -220,10 +220,10 @@ export function CinematicIntro({ onComplete, onSkip }) {
                     transition={{ duration: 0.6 }}
                     className={
                       isEmphasis
-                        ? "text-lg md:text-xl font-display text-amber-300/90 leading-relaxed"
+                        ? "text-base sm:text-lg md:text-xl font-display text-amber-300/90 leading-relaxed"
                         : isFinal
-                        ? "text-lg md:text-xl font-body text-emerald-300/80 leading-relaxed italic"
-                        : "text-base md:text-lg font-body text-white/50 leading-relaxed"
+                        ? "text-base sm:text-lg md:text-xl font-body text-emerald-300/80 leading-relaxed italic"
+                        : "text-sm sm:text-base md:text-lg font-body text-white/50 leading-relaxed"
                     }
                   >
                     {line}
@@ -242,7 +242,7 @@ export function CinematicIntro({ onComplete, onSkip }) {
                   className="w-full max-w-md"
                 >
                   <div
-                    className="flex items-start gap-3 px-5 py-4 rounded-xl"
+                    className="flex items-start gap-2.5 sm:gap-3 px-3.5 sm:px-5 py-3 sm:py-4 rounded-xl"
                     style={{
                       background: "rgba(255,255,255,0.04)",
                       backdropFilter: "blur(12px)",
@@ -250,8 +250,8 @@ export function CinematicIntro({ onComplete, onSkip }) {
                       boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
                     }}
                   >
-                    <HelpCircle className="w-5 h-5 text-amber-400/60 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm md:text-base font-body text-white/60 italic leading-relaxed" data-testid={`text-question-${beat.id}`}>
+                    <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400/60 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs sm:text-sm md:text-base font-body text-white/60 italic leading-relaxed" data-testid={`text-question-${beat.id}`}>
                       {beat.question}
                     </p>
                   </div>
@@ -288,14 +288,14 @@ export function CinematicIntro({ onComplete, onSkip }) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    className="text-white/30 font-body text-sm tracking-wide"
+                    className="text-white/30 font-body text-xs sm:text-sm tracking-wide"
                   >
                     Protect the planet. Keep the balance.
                   </motion.p>
                   <Button
                     size="lg"
                     onClick={onComplete}
-                    className="rounded-full text-lg font-display tracking-[0.3em] uppercase overflow-visible border border-emerald-400/40"
+                    className="rounded-full text-base sm:text-lg font-display tracking-[0.3em] uppercase overflow-visible border border-emerald-400/40"
                     style={{
                       background: "linear-gradient(135deg, rgba(6,78,59,0.8) 0%, rgba(22,101,52,0.6) 100%)",
                       boxShadow: "0 0 50px rgba(74,222,128,0.2), 0 0 100px rgba(74,222,128,0.1)",
@@ -312,7 +312,9 @@ export function CinematicIntro({ onComplete, onSkip }) {
         </motion.div>
       </AnimatePresence>
 
-      <div className="absolute bottom-4 left-0 right-0 flex items-center justify-between px-6 z-30">
+      <div className="absolute bottom-4 left-0 right-0 flex items-center justify-between px-4 sm:px-6 z-30"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         <div className="flex items-center gap-1.5">
           {STORY_BEATS.map((s, i) => (
             <div

@@ -120,7 +120,7 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }) {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="absolute inset-0 z-40 flex flex-col items-center justify-center p-4 text-center overflow-y-auto"
+      className="absolute inset-0 z-40 flex flex-col items-center justify-center p-3 sm:p-4 text-center overflow-y-auto"
       style={{
         background: 'radial-gradient(ellipse at 50% 30%, rgba(76,29,149,0.4) 0%, rgba(0,0,0,0.92) 100%)',
         backdropFilter: 'blur(20px)',
@@ -141,13 +141,13 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }) {
               transition={{ type: "spring", stiffness: 200, damping: 15 }}
               className="relative mb-6"
             >
-              <div className="w-20 h-20 rounded-2xl flex items-center justify-center border border-purple-400/30"
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center border border-purple-400/30"
                 style={{
                   background: 'linear-gradient(135deg, rgba(76,29,149,0.6) 0%, rgba(109,40,217,0.3) 100%)',
                   boxShadow: '0 0 60px rgba(139,92,246,0.2)',
                 }}
               >
-                <Skull className="w-10 h-10 text-purple-300" style={{ filter: 'drop-shadow(0 0 12px rgba(139,92,246,0.5))' }} />
+                <Skull className="w-8 h-8 sm:w-10 sm:h-10 text-purple-300" style={{ filter: 'drop-shadow(0 0 12px rgba(139,92,246,0.5))' }} />
               </div>
               <motion.div
                 animate={{ scale: [1, 1.4, 1], opacity: [0.2, 0, 0.2] }}
@@ -238,9 +238,9 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }) {
                 exit={{ opacity: 0, x: -30 }}
                 className="w-full"
               >
-                <div className="px-5 py-4 mb-5 rounded-xl border border-purple-400/15 bg-purple-500/[0.06]">
+                <div className="px-3.5 sm:px-5 py-3 sm:py-4 mb-4 sm:mb-5 rounded-xl border border-purple-400/15 bg-purple-500/[0.06]">
                   <Globe className="w-5 h-5 text-purple-300/50 mx-auto mb-2" />
-                  <p className="text-white/90 font-body text-base leading-relaxed">
+                  <p className="text-white/90 font-body text-sm sm:text-base leading-relaxed">
                     {questions[currentQ].question}
                   </p>
                 </div>
@@ -312,7 +312,7 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }) {
               transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
               className="relative mb-6"
             >
-              <div className={`w-20 h-20 rounded-2xl flex items-center justify-center border ${
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center border ${
                 passed ? 'border-emerald-400/30' : 'border-red-400/30'
               }`}
                 style={{
@@ -325,9 +325,9 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }) {
                 }}
               >
                 {passed ? (
-                  <Sparkles className="w-10 h-10 text-emerald-300" style={{ filter: 'drop-shadow(0 0 12px rgba(74,222,128,0.4))' }} />
+                  <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-300" style={{ filter: 'drop-shadow(0 0 12px rgba(74,222,128,0.4))' }} />
                 ) : (
-                  <AlertTriangle className="w-10 h-10 text-red-300" style={{ filter: 'drop-shadow(0 0 12px rgba(248,113,113,0.4))' }} />
+                  <AlertTriangle className="w-8 h-8 sm:w-10 sm:h-10 text-red-300" style={{ filter: 'drop-shadow(0 0 12px rgba(248,113,113,0.4))' }} />
                 )}
               </div>
             </motion.div>
@@ -342,10 +342,10 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }) {
               }`}>
                 {passed ? "You Passed" : "You Failed"}
               </p>
-              <h2 className="text-3xl md:text-4xl font-display text-white/95 mb-2 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-display text-white/95 mb-2 tracking-tight">
                 {passed ? "Freedom Earned" : "Trapped Forever"}
               </h2>
-              <p className={`font-body text-sm mb-6 max-w-sm mx-auto ${
+              <p className={`font-body text-xs sm:text-sm mb-6 max-w-sm mx-auto px-2 ${
                 passed ? 'text-emerald-300/60' : 'text-red-300/60'
               }`}>
                 {passed
@@ -374,20 +374,20 @@ export function MalakarQuiz({ onPass, onPlayAgain, onExit }) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
-              className="flex gap-2"
+              className="flex flex-col sm:flex-row gap-2 w-full max-w-[260px]"
             >
               {passed ? (
-                <Button onClick={onPass} className="px-5 rounded-lg bg-emerald-600/80 text-white font-display text-xs tracking-widest border border-emerald-500/30" data-testid="button-return-earth">
+                <Button onClick={onPass} className="w-full sm:w-auto px-5 rounded-lg bg-emerald-600/80 text-white font-display text-xs tracking-widest border border-emerald-500/30" data-testid="button-return-earth">
                   <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                   RETURN TO EARTH
                 </Button>
               ) : (
-                <Button onClick={onPlayAgain} className="px-5 rounded-lg bg-purple-600/70 text-white font-display text-xs tracking-widest border border-purple-500/30" data-testid="button-try-again-quiz">
+                <Button onClick={onPlayAgain} className="w-full sm:w-auto px-5 rounded-lg bg-purple-600/70 text-white font-display text-xs tracking-widest border border-purple-500/30" data-testid="button-try-again-quiz">
                   <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                   TRY AGAIN
                 </Button>
               )}
-              <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-white/50 font-display text-xs tracking-widest border border-white/[0.06]" data-testid="button-quiz-exit">
+              <Button variant="ghost" onClick={onExit} className="w-full sm:w-auto px-5 rounded-lg text-white/50 font-display text-xs tracking-widest border border-white/[0.06]" data-testid="button-quiz-exit">
                 <Home className="w-3.5 h-3.5 mr-1.5" />
                 EXIT
               </Button>

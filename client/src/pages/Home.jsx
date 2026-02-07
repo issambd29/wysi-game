@@ -95,18 +95,18 @@ export default function Home() {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1 }}
-        className="relative z-10 max-w-4xl mx-auto space-y-8"
+        className="relative z-10 max-w-4xl mx-auto space-y-6 sm:space-y-8 pb-20 md:pb-0"
       >
         <motion.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.8 }}
-          className="space-y-4"
+          className="space-y-3 sm:space-y-4"
         >
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-display font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+          <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-display font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
             EARTH<br />KEEPER
           </h1>
-          <p className="text-lg md:text-2xl font-body text-accent/90 max-w-2xl mx-auto leading-relaxed tracking-wide text-shadow-glow">
+          <p className="text-base sm:text-lg md:text-2xl font-body text-accent/90 max-w-2xl mx-auto leading-relaxed tracking-wide text-shadow-glow px-2">
             A silent war. A secret protector. The planet's last chance.
           </p>
         </motion.div>
@@ -117,10 +117,13 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-2"
           >
-            <div className="flex items-center gap-3 px-6 py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+            <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
               <Sparkles className="w-4 h-4 text-accent animate-pulse" />
-              <span className="text-white/60 font-sans text-[10px] tracking-[0.4em] uppercase">
+              <span className="hidden sm:inline text-white/60 font-sans text-[10px] tracking-[0.4em] uppercase">
                 Welcome back, Earth Keeper
+              </span>
+              <span className="sm:hidden text-white/60 font-sans text-[10px] tracking-[0.3em] uppercase">
+                Welcome back
               </span>
               <span className="text-primary font-bold tracking-[0.2em] uppercase text-sm">
                 {profile.nickname}
@@ -134,17 +137,17 @@ export default function Home() {
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.8 }}
-          className="flex flex-col md:flex-row items-center justify-center gap-6 pt-8"
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 pt-4 sm:pt-8"
         >
           <Button
             size="lg"
             onClick={handleEnterWorld}
-            className="group relative rounded-full text-xl font-display tracking-widest overflow-hidden bg-primary/20 border border-primary/50 shadow-[0_0_40px_-10px_rgba(74,222,128,0.3)]"
+            className="group relative rounded-full text-lg sm:text-xl font-display tracking-widest overflow-hidden bg-primary/20 border border-primary/50 shadow-[0_0_40px_-10px_rgba(74,222,128,0.3)] w-full sm:w-auto"
             data-testid="button-enter-world"
           >
-            <span className="relative z-10 flex items-center gap-3 text-white">
+            <span className="relative z-10 flex items-center justify-center gap-3 text-white">
               {profile ? "Continue Journey" : "Enter the World"}
-              <ArrowRight className="w-6 h-6" />
+              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
             </span>
           </Button>
 
@@ -152,10 +155,10 @@ export default function Home() {
             <Button
               size="lg"
               variant="outline"
-              className="rounded-full text-xl font-display tracking-widest bg-transparent border-white/20 text-white/80"
+              className="rounded-full text-lg sm:text-xl font-display tracking-widest bg-transparent border-white/20 text-white/80 w-full sm:w-auto"
               data-testid="button-story"
             >
-              <span className="flex items-center gap-3">
+              <span className="flex items-center justify-center gap-3">
                 The Story
                 <BookOpen className="w-5 h-5" />
               </span>
