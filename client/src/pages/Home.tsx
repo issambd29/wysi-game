@@ -12,7 +12,7 @@ import { Link } from "wouter";
 type GamePhase = "home" | "intro" | "difficulty" | "playing";
 
 export default function Home() {
-  const { profile, loading, createProfile } = useGameProfile();
+  const { profile, loading, createProfile, saveScore } = useGameProfile();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [phase, setPhase] = useState<GamePhase>("home");
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
@@ -81,6 +81,7 @@ export default function Home() {
             nickname={profile.nickname}
             onExit={handleExitGame}
             difficulty={difficulty}
+            onSaveScore={saveScore}
           />
         )}
       </AnimatePresence>

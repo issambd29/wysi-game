@@ -49,6 +49,7 @@ interface GameProps {
   onExit: () => void;
   nickname: string;
   difficulty: Difficulty;
+  onSaveScore?: (data: { score: number; level: number; levelName: string; difficulty: string; maxCombo: number; collected: number; destroyed: number; time: number }) => void;
 }
 
 const GARBAGE_CONFIG: Record<string, { icon: typeof Trash2; label: string; iconColor: string; bgGlow: string; color: string; toxicColor: string }> = {
@@ -73,7 +74,7 @@ const DIFFICULTY_CONFIG = {
   hard: { speedMult: 1.5, spawnMult: 0.55, toxicBase: 0.32, toxicScale: 0.08, damageMult: 1.6, healMult: 0.3, label: "Nature in Crisis", Icon: Flame, color: "text-orange-400" },
 };
 
-export function Game({ onExit, nickname, difficulty }: GameProps) {
+export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
   const [score, setScore] = useState(0);
   const [health, setHealth] = useState(100);
   const [level, setLevel] = useState(1);
@@ -119,6 +120,7 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
   const comboRef = useRef(0);
   const popupIdRef = useRef(0);
   const particleIdRef = useRef(0);
+  const scoreSavedRef = useRef(false);
 
   const PLAYER_Y = 85;
   const SHOT_SPEED = 2;
@@ -136,6 +138,22 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
   activePowerUpRef.current = activePowerUp;
   comboRef.current = combo;
   pausedRef.current = paused;
+
+  useEffect(() => {
+    if (gameOver && !scoreSavedRef.current && onSaveScore) {
+      scoreSavedRef.current = true;
+      onSaveScore({
+        score,
+        level,
+        levelName: LEVEL_NAMES[Math.min(level - 1, LEVEL_NAMES.length - 1)],
+        difficulty,
+        maxCombo,
+        collected,
+        destroyed,
+        time,
+      });
+    }
+  }, [gameOver]);
 
   const addPopup = useCallback((x: number, y: number, text: string, color: string) => {
     const id = ++popupIdRef.current;
@@ -457,6 +475,7 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
     playerPosRef.current = 50;
     activePowerUpRef.current = null;
     comboRef.current = 0;
+    scoreSavedRef.current = false;
     setPlayerPosition(50);
   };
 

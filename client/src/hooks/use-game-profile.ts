@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ref, get, set, child } from "firebase/database";
+import { ref, get, set, push, child } from "firebase/database";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { nanoid } from "nanoid";
@@ -9,6 +9,17 @@ export interface GameProfile {
   nickname: string;
   firstVisit: number;
   lastVisit: number;
+}
+
+export interface GameScoreData {
+  score: number;
+  level: number;
+  levelName: string;
+  difficulty: string;
+  maxCombo: number;
+  collected: number;
+  destroyed: number;
+  time: number;
 }
 
 const STORAGE_KEY = "earth_keeper_id";
@@ -30,14 +41,12 @@ export function useGameProfile() {
           
           if (snapshot.exists()) {
             const userData = snapshot.val();
-            // Update last visit
             await set(ref(db, `users/${storedId}`), {
               ...userData,
               lastVisit: Date.now()
             });
             setProfile({ id: storedId, ...userData });
           } else {
-            // ID exists locally but not in DB (cleared DB?), treat as new
             localStorage.removeItem(STORAGE_KEY);
           }
         }
@@ -87,5 +96,45 @@ export function useGameProfile() {
     }
   };
 
-  return { profile, loading, createProfile };
+  const saveScore = async (data: GameScoreData) => {
+    const userId = localStorage.getItem(STORAGE_KEY);
+    if (!userId || !profile) return;
+
+    const record = {
+      nickname: profile.nickname,
+      userId,
+      score: data.score,
+      level: data.level,
+      levelName: data.levelName,
+      difficulty: data.difficulty,
+      maxCombo: data.maxCombo,
+      collected: data.collected,
+      destroyed: data.destroyed,
+      time: Math.floor(data.time),
+      timestamp: Date.now(),
+    };
+
+    try {
+      await push(ref(db, "scores"), record);
+
+      const userRef = ref(db, `users/${userId}`);
+      const snap = await get(userRef);
+      if (snap.exists()) {
+        const userData = snap.val();
+        const currentBest = userData.bestScore || 0;
+        const updates: Record<string, any> = { ...userData, lastVisit: Date.now() };
+        if (data.score > currentBest) {
+          updates.bestScore = data.score;
+          updates.bestLevel = data.level;
+          updates.bestLevelName = data.levelName;
+          updates.bestDifficulty = data.difficulty;
+        }
+        await set(userRef, updates);
+      }
+    } catch (error) {
+      console.error("Failed to save score:", error);
+    }
+  };
+
+  return { profile, loading, createProfile, saveScore };
 }
