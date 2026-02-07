@@ -96,7 +96,7 @@ export default function Home() {
             EARTH<br />KEEPER
           </h1>
           <p className="text-lg md:text-2xl font-body text-accent/90 max-w-2xl mx-auto leading-relaxed tracking-wide text-shadow-glow">
-            Nature chose you. Protect the balance. Restore the land.
+            A silent war. A secret protector. The planet's last chance.
           </p>
         </motion.div>
 

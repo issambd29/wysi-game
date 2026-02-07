@@ -68,9 +68,9 @@ const LEVEL_NAMES = [
 const LEVEL_THRESHOLDS = [0, 300, 750, 1500, 2500, 4000, 6000, 8500, 12000, 16000];
 
 const DIFFICULTY_CONFIG = {
-  easy: { speedMult: 0.65, spawnMult: 1.5, toxicBase: 0.08, toxicScale: 0.03, damageMult: 0.6, label: "Calm Nature", Icon: Leaf, color: "text-emerald-400" },
-  normal: { speedMult: 1.0, spawnMult: 1.0, toxicBase: 0.15, toxicScale: 0.05, damageMult: 1.0, label: "Balanced Earth", Icon: Globe, color: "text-sky-400" },
-  hard: { speedMult: 1.4, spawnMult: 0.6, toxicBase: 0.25, toxicScale: 0.07, damageMult: 1.4, label: "Nature in Crisis", Icon: Flame, color: "text-orange-400" },
+  easy: { speedMult: 0.75, spawnMult: 1.3, toxicBase: 0.12, toxicScale: 0.04, damageMult: 0.8, healMult: 1.0, label: "Calm Nature", Icon: Leaf, color: "text-emerald-400" },
+  normal: { speedMult: 1.1, spawnMult: 0.85, toxicBase: 0.2, toxicScale: 0.06, damageMult: 1.2, healMult: 0.6, label: "Balanced Earth", Icon: Globe, color: "text-sky-400" },
+  hard: { speedMult: 1.5, spawnMult: 0.55, toxicBase: 0.32, toxicScale: 0.08, damageMult: 1.6, healMult: 0.3, label: "Nature in Crisis", Icon: Flame, color: "text-orange-400" },
 };
 
 export function Game({ onExit, nickname, difficulty }: GameProps) {
@@ -123,9 +123,10 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
   const PLAYER_Y = 85;
   const SHOT_SPEED = 2;
   const CONTAINER_Y = 95;
-  const CONTAINER_WIDTH = 16;
+  const CONTAINER_WIDTH = 12;
+  const NEAR_MISS_WIDTH = 20;
   const POLLUTION_TYPES: GameObject["type"][] = ["bottle", "bag", "can", "barrel", "oil", "ewaste"];
-  const COMBO_TIMEOUT = 2000;
+  const COMBO_TIMEOUT = 1800;
 
   scoreRef.current = score;
   levelRef.current = level;
@@ -157,10 +158,23 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
     setCombo(c => {
       const newCombo = c + 1;
       setMaxCombo(m => Math.max(m, newCombo));
+      if (newCombo === 10) {
+        setScore(s => s + 50);
+        setHealth(h => Math.min(100, h + 5));
+        addPopup(50, 40, "STREAK x10! +50", "text-amber-200");
+      } else if (newCombo === 20) {
+        setScore(s => s + 150);
+        setHealth(h => Math.min(100, h + 10));
+        addPopup(50, 40, "STREAK x20! +150", "text-amber-100");
+      } else if (newCombo === 30) {
+        setScore(s => s + 300);
+        setHealth(h => Math.min(100, h + 15));
+        addPopup(50, 40, "UNSTOPPABLE! +300", "text-yellow-200");
+      }
       return newCombo;
     });
     comboTimerRef.current = Date.now();
-  }, []);
+  }, [addPopup]);
 
   const getComboMultiplier = useCallback(() => {
     if (comboRef.current >= 20) return 4;
@@ -240,10 +254,10 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
       const spawnRate = Math.max(300, (2000 - (currentLevel * 250)) * dc.spawnMult);
       if (timestamp - lastSpawnRef.current > spawnRate) {
         const type = POLLUTION_TYPES[Math.floor(Math.random() * POLLUTION_TYPES.length)];
-        const toxicChance = Math.min(0.7, dc.toxicBase + (currentLevel * dc.toxicScale));
+        const toxicChance = Math.min(0.75, dc.toxicBase + (currentLevel * dc.toxicScale));
         const isToxic = Math.random() < toxicChance;
-        const baseSpeed = 0.12 + Math.random() * 0.2;
-        const levelMultiplier = 1 + currentLevel * 0.12;
+        const baseSpeed = 0.18 + Math.random() * 0.25;
+        const levelMultiplier = 1 + currentLevel * 0.18;
         const slowFactor = activePowerUpRef.current === "slow" ? 0.4 : 1;
 
         setPollution(prev => [...prev, {
@@ -260,7 +274,7 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
         lastSpawnRef.current = timestamp;
       }
 
-      if (timestamp - lastPowerUpRef.current > 12000) {
+      if (timestamp - lastPowerUpRef.current > 15000) {
         const types: PowerUp["type"][] = ["shield", "beam", "slow", "seed"];
         setPowerUps(prev => [...prev, {
           id: Date.now() + Math.random(),
@@ -283,21 +297,28 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
           const newWindOffset = p.windOffset + wind * dtScale;
           const effectiveX = Math.max(2, Math.min(98, p.x + newWindOffset * 0.3));
           if (newY > CONTAINER_Y) {
-            const inContainer = Math.abs(effectiveX - playerPosRef.current) < CONTAINER_WIDTH;
+            const dist = Math.abs(effectiveX - playerPosRef.current);
+            const inContainer = dist < CONTAINER_WIDTH;
+            const nearMiss = !inContainer && dist < NEAR_MISS_WIDTH;
             if (inContainer) {
               const mult = getComboMultiplier();
               const pts = (p.isToxic ? 25 : 15) * mult;
               setCollected(c => c + 1);
               setScore(s => s + pts);
-              hDelta += 3;
+              hDelta += Math.round(2 * dc.healMult);
               incrementCombo();
               addPopup(effectiveX, CONTAINER_Y - 5, `+${pts}`, "text-emerald-300");
               addHitParticle(effectiveX, CONTAINER_Y - 3, "bg-emerald-400");
             } else {
               if (activePowerUpRef.current !== "shield") {
-                const dmg = Math.round((p.isToxic ? 15 : 5) * dc.damageMult);
+                const dmg = Math.round((p.isToxic ? 18 : 8) * dc.damageMult);
                 hDelta -= dmg;
                 triggerShake();
+              }
+              if (nearMiss) {
+                const nearPts = 5 * getComboMultiplier();
+                setScore(s => s + nearPts);
+                addPopup(effectiveX, CONTAINER_Y - 8, `CLOSE! +${nearPts}`, "text-yellow-300");
               }
               setCombo(0);
             }
@@ -335,7 +356,7 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
               const mult = getComboMultiplier();
               const pts = 10 * mult;
               setScore(s => s + pts);
-              setHealth(h => Math.min(100, h + 1));
+              setHealth(h => Math.min(100, h + Math.round(1 * dc.healMult)));
               setDestroyed(d => d + 1);
               incrementCombo();
               addPopup(hitPol.x, hitPol.y, `+${pts}`, "text-amber-300");
@@ -354,7 +375,7 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
           if (found.type === "seed") {
             setPollution([]);
             setScore(s => s + 100);
-            setHealth(h => Math.min(100, h + 20));
+            setHealth(h => Math.min(100, h + 12));
             setShowSeedBurst(true);
             addPopup(50, 50, "+100 SEED BURST", "text-emerald-300");
             setTimeout(() => setShowSeedBurst(false), 1000);
@@ -939,8 +960,8 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-amber-300/40 rounded-full blur-[2px]" />
             </div>
 
-            {/* Container - bigger and more visible */}
-            <div className="relative w-28 h-8" data-testid="garbage-container">
+            {/* Container */}
+            <div className="relative w-24 h-8" data-testid="garbage-container">
               <div className="absolute inset-0 rounded-b-lg rounded-t-sm overflow-hidden border-2"
                 style={{
                   background: 'linear-gradient(to bottom, rgba(6,78,59,0.6) 0%, rgba(6,60,40,0.8) 100%)',
@@ -1059,8 +1080,8 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
                 <div className="w-16 h-16 rounded-2xl bg-amber-500/[0.06] border border-amber-400/15 flex items-center justify-center mb-4">
                   <Trophy className="w-8 h-8 text-amber-400/80" />
                 </div>
-                <h2 className="text-3xl font-display text-white/90 mb-0.5 tracking-tight">The Forest Fell Silent</h2>
-                <p className="text-white/30 font-body text-xs mb-5">But the seeds of change have been planted</p>
+                <h2 className="text-3xl font-display text-white/90 mb-0.5 tracking-tight">Earth Fell Silent</h2>
+                <p className="text-white/30 font-body text-xs mb-5">But the fight is not over. The villain still watches.</p>
 
                 <div className="w-full grid grid-cols-4 gap-2 mb-4">
                   {[
@@ -1085,7 +1106,7 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
                   <span className="text-white/30 text-[9px] tabular-nums font-display">{Math.floor(time)}s</span>
                 </div>
 
-                <p className="text-white/20 font-body text-[10px] italic mb-5">"Nature gives you one chance. Protect it."</p>
+                <p className="text-white/20 font-body text-[10px] italic mb-5">"Earth does not need a hero seeking glory. It needs a keeper who never stops."</p>
 
                 <div className="flex gap-2">
                   <Button onClick={resetGame} className="px-5 rounded-lg bg-emerald-600/80 text-white font-display text-xs tracking-widest border border-emerald-500/30" data-testid="button-restart-game">
