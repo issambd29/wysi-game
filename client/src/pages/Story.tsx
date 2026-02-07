@@ -132,9 +132,11 @@ export default function Story() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 1 }}
-        className="text-white/30 font-body text-sm tracking-wide mb-12 text-center"
+        className="text-white/40 font-body text-base leading-relaxed max-w-xl mb-12 text-center"
       >
-        The complete story of the Earth Keeper
+        Somewhere beyond the stars, a dying world turned its rage toward Earth.
+        This is the story of how the planet chose its secret protector, and the silent war
+        that no one was ever meant to see.
       </motion.p>
 
       <div className="space-y-12 w-full">
