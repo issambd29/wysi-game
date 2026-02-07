@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, TreePine, Skull, AlertTriangle, Sparkles, Globe, Crosshair, Shield, Swords, Wind } from "lucide-react";
+import { Leaf, Skull, Sparkles, Swords, SkipForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CinematicIntroProps {
@@ -21,31 +21,13 @@ interface StoryBeat {
 
 const STORY_BEATS: StoryBeat[] = [
   {
-    id: "silent-war",
+    id: "threat",
     lines: [
-      "A Silent War for a Living Planet",
+      "A villain from a dying world",
+      "turned garbage into a weapon.",
       "",
-      "Not long from now...",
-      "the threat did not rise from Earth,",
-      "but from a planet that forgot what life means.",
-    ],
-    bg: "radial-gradient(ellipse at 50% 60%, hsl(220, 30%, 8%) 0%, hsl(230, 20%, 4%) 60%, #000 100%)",
-    particleColor: "rgba(100,140,200,0.15)",
-    glowColor: "rgba(80,120,180,0.06)",
-    icon: Globe,
-    iconColor: "text-blue-400/60",
-    particleDir: "down",
-  },
-  {
-    id: "villain",
-    lines: [
-      "A villain ruled a dying world,",
-      "one that drowned in its own waste.",
-      "",
-      "Unable to restore balance,",
-      "he chose a darker solution.",
-      "",
-      "He turned garbage into a weapon.",
+      "Earth refused his ransom.",
+      "Now trash rains from the sky.",
     ],
     bg: "radial-gradient(ellipse at 50% 40%, hsl(0, 15%, 8%) 0%, hsl(350, 10%, 4%) 60%, #000 100%)",
     particleColor: "rgba(200,60,40,0.15)",
@@ -55,57 +37,14 @@ const STORY_BEATS: StoryBeat[] = [
     particleDir: "down",
   },
   {
-    id: "ultimatum",
-    lines: [
-      "An ultimatum was sent to Earth.",
-      "",
-      "Pay the ransom.",
-      "Resources. Wealth. Control.",
-      "",
-      "Earth did not answer.",
-      "",
-      "Not out of weakness\u2014",
-      "but dignity.",
-    ],
-    bg: "radial-gradient(ellipse at 50% 50%, hsl(40, 12%, 7%) 0%, hsl(35, 8%, 3%) 60%, #000 100%)",
-    particleColor: "rgba(200,170,80,0.12)",
-    glowColor: "rgba(200,170,80,0.04)",
-    icon: Shield,
-    iconColor: "text-amber-400/60",
-    particleDir: "up",
-  },
-  {
-    id: "attack",
-    lines: [
-      "Enraged, the villain unleashed his punishment.",
-      "",
-      "From his planet,",
-      "waves of trash were launched toward Earth.",
-      "",
-      "Garbage rained from the sky,",
-      "falling onto forests,",
-      "choking oceans,",
-      "darkening cities in silence.",
-    ],
-    bg: "radial-gradient(ellipse at 50% 20%, hsl(30, 10%, 6%) 0%, hsl(20, 8%, 3%) 60%, #000 100%)",
-    particleColor: "rgba(180,100,50,0.2)",
-    glowColor: "rgba(180,100,50,0.05)",
-    icon: AlertTriangle,
-    iconColor: "text-orange-400/60",
-    particleDir: "down",
-  },
-  {
     id: "keeper",
     lines: [
-      "In secrecy,",
       "Earth awakened its last protector.",
       "",
       "You.",
       "",
-      "No medals. No fame. No witnesses.",
-      "",
-      "Your mission is to protect...",
-      "without being seen.",
+      "No medals. No fame.",
+      "Just a mission to protect.",
     ],
     bg: "radial-gradient(ellipse at 50% 50%, hsl(150, 30%, 8%) 0%, hsl(140, 20%, 4%) 60%, #000 100%)",
     particleColor: "rgba(74,222,128,0.2)",
@@ -115,33 +54,12 @@ const STORY_BEATS: StoryBeat[] = [
     particleDir: "up",
   },
   {
-    id: "mission",
-    lines: [
-      "Every piece of garbage you destroy",
-      "gives Earth another breath.",
-      "",
-      "Every second you survive",
-      "secures a future.",
-      "",
-      "The villain watches.",
-      "The attacks grow stronger.",
-      "Time grows shorter.",
-    ],
-    bg: "radial-gradient(ellipse at 50% 40%, hsl(150, 25%, 6%) 0%, hsl(160, 15%, 3%) 60%, #000 100%)",
-    particleColor: "rgba(250,200,50,0.15)",
-    glowColor: "rgba(250,200,50,0.05)",
-    icon: Crosshair,
-    iconColor: "text-amber-300/60",
-    particleDir: "up",
-  },
-  {
     id: "call",
     lines: [
-      "What falls today...",
-      "is what we leave behind tomorrow.",
+      "Every piece you destroy",
+      "gives Earth another breath.",
       "",
-      "Earth does not need a hero seeking glory.",
-      "It needs a keeper who never stops.",
+      "The keeper never stops.",
     ],
     bg: "radial-gradient(ellipse at 50% 50%, hsl(150, 35%, 10%) 0%, hsl(140, 25%, 5%) 40%, #000 100%)",
     particleColor: "rgba(74,222,128,0.25)",
@@ -170,19 +88,19 @@ export function CinematicIntro({ onComplete, onSkip }: CinematicIntroProps) {
       if (lineIdx < beat.lines.length) {
         lineIdx++;
         setVisibleLines(lineIdx);
-        const delay = beat.lines[lineIdx - 1] === "" ? 400 : 900;
+        const delay = beat.lines[lineIdx - 1] === "" ? 300 : 700;
         lineTimerRef.current = setTimeout(revealNext, delay);
       } else {
         if (isLastBeat) {
-          beatTimerRef.current = setTimeout(() => setShowPlayButton(true), 1200);
+          beatTimerRef.current = setTimeout(() => setShowPlayButton(true), 800);
         } else {
           beatTimerRef.current = setTimeout(() => {
             setCurrentBeat(b => b + 1);
-          }, 2000);
+          }, 1500);
         }
       }
     };
-    lineTimerRef.current = setTimeout(revealNext, 800);
+    lineTimerRef.current = setTimeout(revealNext, 600);
 
     return () => {
       if (lineTimerRef.current) clearTimeout(lineTimerRef.current);
@@ -259,9 +177,8 @@ export function CinematicIntro({ onComplete, onSkip }: CinematicIntroProps) {
               if (i >= visibleLines) return null;
               if (line === "") return <div key={i} className="h-4" />;
 
-              const isTitle = i === 0 && currentBeat === 0;
-              const isEmphasis = line.startsWith("You.") || line.startsWith("Pay the ransom") || line.startsWith("Resources.");
-              const isFinal = isLastBeat && (line.includes("Earth does not need") || line.includes("keeper who never stops"));
+              const isEmphasis = line === "You." || line.startsWith("Now trash rains");
+              const isFinal = isLastBeat && line.includes("keeper never stops");
 
               return (
                 <motion.p
@@ -270,9 +187,7 @@ export function CinematicIntro({ onComplete, onSkip }: CinematicIntroProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
                   className={
-                    isTitle
-                      ? "text-2xl md:text-4xl font-display text-white/90 mb-6 tracking-tight"
-                      : isEmphasis
+                    isEmphasis
                       ? "text-lg md:text-xl font-display text-amber-300/90 leading-relaxed"
                       : isFinal
                       ? "text-lg md:text-xl font-body text-emerald-300/80 leading-relaxed italic"
@@ -333,10 +248,11 @@ export function CinematicIntro({ onComplete, onSkip }: CinematicIntroProps) {
         </div>
         <button
           onClick={onSkip}
-          className="text-white/15 text-[10px] font-display tracking-[0.3em] uppercase transition-colors"
+          className="flex items-center gap-1.5 text-white/30 text-xs font-display tracking-[0.2em] uppercase transition-colors px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08]"
           data-testid="button-skip-intro"
         >
-          SKIP
+          <span>SKIP</span>
+          <SkipForward className="w-3.5 h-3.5" />
         </button>
       </div>
     </motion.div>

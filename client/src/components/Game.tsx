@@ -550,6 +550,53 @@ export function Game({ onExit, nickname, difficulty }: GameProps) {
               )}
             </AnimatePresence>
 
+            {/* Active Power-Up Timer */}
+            <AnimatePresence>
+              {activePowerUp && powerUpTimer > 0 && (
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 backdrop-blur-xl rounded-lg border"
+                  style={{
+                    background: activePowerUp === "shield" ? "rgba(59,130,246,0.15)" : activePowerUp === "beam" ? "rgba(234,179,8,0.15)" : "rgba(139,92,246,0.15)",
+                    borderColor: activePowerUp === "shield" ? "rgba(59,130,246,0.25)" : activePowerUp === "beam" ? "rgba(234,179,8,0.25)" : "rgba(139,92,246,0.25)",
+                  }}
+                  data-testid="powerup-timer"
+                >
+                  {activePowerUp === "shield" ? (
+                    <Shield className="w-3 h-3 text-blue-400" />
+                  ) : activePowerUp === "beam" ? (
+                    <Zap className="w-3 h-3 text-yellow-400" />
+                  ) : (
+                    <Clock className="w-3 h-3 text-violet-400" />
+                  )}
+                  <span className={cn(
+                    "text-xs font-bold tabular-nums font-display uppercase",
+                    activePowerUp === "shield" ? "text-blue-300" : activePowerUp === "beam" ? "text-yellow-300" : "text-violet-300"
+                  )}>
+                    {activePowerUp}
+                  </span>
+                  <div className="w-12 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                    <motion.div
+                      className={cn(
+                        "h-full rounded-full",
+                        activePowerUp === "shield" ? "bg-blue-400" : activePowerUp === "beam" ? "bg-yellow-400" : "bg-violet-400"
+                      )}
+                      animate={{ width: `${(powerUpTimer / 10) * 100}%` }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                  <span className={cn(
+                    "text-[10px] tabular-nums font-display",
+                    activePowerUp === "shield" ? "text-blue-400/60" : activePowerUp === "beam" ? "text-yellow-400/60" : "text-violet-400/60"
+                  )}>
+                    {powerUpTimer}s
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Stats */}
             <div className="flex items-center gap-0 bg-black/40 backdrop-blur-xl rounded-lg border border-white/[0.06] overflow-hidden">
               <div className="px-3 py-1.5 text-center border-r border-white/[0.04]">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameProfile } from "@/hooks/use-game-profile";
 import { ProfileModal } from "@/components/ProfileModal";
@@ -16,6 +16,17 @@ export default function Home() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [phase, setPhase] = useState<GamePhase>("home");
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+
+  const isInGame = phase !== "home";
+
+  useEffect(() => {
+    if (isInGame) {
+      document.body.classList.add("game-active");
+    } else {
+      document.body.classList.remove("game-active");
+    }
+    return () => document.body.classList.remove("game-active");
+  }, [isInGame]);
 
   const handleEnterWorld = () => {
     if (!profile) {
