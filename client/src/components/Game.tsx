@@ -511,7 +511,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
-      style={{ background: 'radial-gradient(ellipse at 50% 30%, hsl(150, 30%, 6%) 0%, hsl(160, 20%, 3%) 60%, #000 100%)' }}
+      style={{ background: 'radial-gradient(ellipse at 50% 20%, hsl(150, 35%, 8%) 0%, hsl(155, 28%, 5%) 35%, hsl(160, 22%, 3%) 65%, hsl(165, 15%, 1%) 100%)' }}
     >
       {/* HUD - Top Bar */}
       <div className="absolute top-0 left-0 right-0 z-10 px-3 py-2">
@@ -807,6 +807,60 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
                 : 'linear-gradient(90deg, transparent 0%, rgba(120,50,50,0.06) 50%, transparent 100%)'
             }}
           />
+
+          {/* Grass blades */}
+          {health > 30 && (
+            <div className="absolute bottom-[8%] left-0 right-0 h-[5%] pointer-events-none overflow-hidden">
+              <svg viewBox="0 0 1200 40" className="w-full h-full" preserveAspectRatio="none">
+                {[...Array(60)].map((_, i) => {
+                  const x = i * 20 + (i % 3) * 5;
+                  const h = 12 + (i % 5) * 6;
+                  const sway = Math.sin(bgOffset * 0.5 + i * 0.7) * 3;
+                  const col = health > 50
+                    ? `rgba(${34 + (i % 3) * 10},${140 + (i % 4) * 20},${80 + (i % 3) * 10},${0.25 + (i % 5) * 0.05})`
+                    : `rgba(${80 + (i % 3) * 10},${70 + (i % 4) * 10},${30},${0.15 + (i % 5) * 0.03})`;
+                  return (
+                    <line key={`grass-${i}`} x1={x} y1={40} x2={x + sway} y2={40 - h} stroke={col} strokeWidth={i % 4 === 0 ? 2 : 1} strokeLinecap="round" />
+                  );
+                })}
+              </svg>
+            </div>
+          )}
+
+          {/* Aurora / Nature glow in upper sky */}
+          {health > 60 && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-[30%]" style={{
+                background: `linear-gradient(180deg, rgba(74,222,128,${0.02 + Math.sin(bgOffset * 0.15) * 0.01}) 0%, transparent 100%)`,
+              }} />
+              <div className="absolute top-0 left-[20%] w-[30%] h-[20%]" style={{
+                background: `radial-gradient(ellipse, rgba(56,189,248,${0.015 + Math.sin(bgOffset * 0.2 + 1) * 0.008}) 0%, transparent 70%)`,
+                filter: 'blur(8px)'
+              }} />
+              <div className="absolute top-0 right-[15%] w-[25%] h-[18%]" style={{
+                background: `radial-gradient(ellipse, rgba(167,139,250,${0.012 + Math.sin(bgOffset * 0.18 + 2) * 0.006}) 0%, transparent 70%)`,
+                filter: 'blur(10px)'
+              }} />
+            </div>
+          )}
+
+          {/* Falling leaves */}
+          {health > 45 && [...Array(6)].map((_, i) => (
+            <motion.div
+              key={`leaf-${i}`}
+              animate={{
+                y: [-(20 + i * 10), 300],
+                x: [0, Math.sin(i * 1.2) * 60, Math.cos(i * 0.8) * -40, Math.sin(i * 2) * 50],
+                rotate: [0, 360, 180, 540],
+                opacity: [0, 0.3, 0.25, 0]
+              }}
+              transition={{ repeat: Infinity, duration: 10 + i * 2.5, ease: "linear", delay: i * 1.8 }}
+              className="absolute z-[2] pointer-events-none"
+              style={{ left: `${8 + i * 15}%`, top: '5%' }}
+            >
+              <Leaf className={`w-2.5 h-2.5 ${health > 60 ? 'text-emerald-400/20' : 'text-amber-500/15'}`} />
+            </motion.div>
+          ))}
 
           {/* Light shafts */}
           {health > 50 && (
@@ -1127,7 +1181,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 z-30 flex flex-col items-center justify-center"
-              style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.8) 100%)', backdropFilter: 'blur(8px)' }}
+              style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(6,40,30,0.6) 0%, rgba(0,10,8,0.8) 100%)', backdropFilter: 'blur(8px)' }}
             >
               <motion.div
                 initial={{ scale: 0.9 }}
@@ -1180,52 +1234,115 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="absolute inset-0 z-20 flex flex-col items-center justify-center p-4 text-center"
-              style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.85) 100%)', backdropFilter: 'blur(12px)' }}
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center p-4 text-center overflow-hidden"
+              style={{
+                background: 'radial-gradient(ellipse at 50% 80%, rgba(30,20,10,0.7) 0%, rgba(15,8,4,0.9) 50%, rgba(0,0,0,0.95) 100%)',
+                backdropFilter: 'blur(12px)'
+              }}
             >
+              {/* Withered nature background elements */}
+              <div className="absolute inset-0 pointer-events-none">
+                <svg viewBox="0 0 800 600" className="absolute inset-0 w-full h-full opacity-[0.06]" preserveAspectRatio="xMidYMid slice">
+                  <path d="M100,600 L100,350 Q95,320 105,280 Q98,250 110,200 Q105,170 100,150 Q90,120 95,80 L97,60 M95,250 Q70,230 50,240 M105,200 Q130,180 145,190 M98,320 Q60,310 45,330 M110,150 Q135,130 150,140" stroke="rgba(120,90,50,0.5)" strokeWidth="3" fill="none" />
+                  <path d="M700,600 L700,380 Q695,340 705,300 Q698,260 710,220 Q705,180 700,160 Q690,130 695,100 L697,80 M695,280 Q670,260 650,270 M705,220 Q730,200 745,210 M698,350 Q660,340 645,360" stroke="rgba(120,90,50,0.5)" strokeWidth="3" fill="none" />
+                </svg>
+                {/* Drifting ash/ember particles */}
+                {[...Array(12)].map((_, i) => (
+                  <motion.div
+                    key={`ash-${i}`}
+                    animate={{
+                      y: [100 + i * 40, -(50 + i * 20)],
+                      x: [0, (i % 2 === 0 ? 20 : -15), (i % 2 === 0 ? -10 : 25)],
+                      opacity: [0, 0.4, 0.2, 0],
+                    }}
+                    transition={{ repeat: Infinity, duration: 6 + i * 1.5, ease: "linear", delay: i * 0.6 }}
+                    className="absolute rounded-full"
+                    style={{
+                      left: `${5 + i * 8}%`,
+                      bottom: '10%',
+                      width: `${1 + (i % 3)}px`,
+                      height: `${1 + (i % 3)}px`,
+                      backgroundColor: i % 3 === 0 ? 'rgba(180,120,40,0.4)' : 'rgba(120,100,80,0.3)',
+                    }}
+                  />
+                ))}
+              </div>
+
               <motion.div
                 initial={{ scale: 0.85, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="flex flex-col items-center max-w-md w-full"
+                className="flex flex-col items-center max-w-md w-full relative z-10"
               >
-                <div className="w-16 h-16 rounded-2xl bg-amber-500/[0.06] border border-amber-400/15 flex items-center justify-center mb-4">
-                  <Trophy className="w-8 h-8 text-amber-400/80" />
-                </div>
-                <h2 className="text-3xl font-display text-white/90 mb-0.5 tracking-tight">Earth Fell Silent</h2>
-                <p className="text-white/30 font-body text-xs mb-5">But the fight is not over. The villain still watches.</p>
+                <motion.div
+                  initial={{ scale: 0, rotate: -20 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                  className="relative mb-4"
+                >
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center border border-amber-700/30 bg-amber-900/30 shadow-[0_0_40px_rgba(180,120,40,0.1)]">
+                    <TreePine className="w-8 h-8 text-amber-600/70" />
+                  </div>
+                  <motion.div
+                    animate={{ opacity: [0.2, 0.4, 0.2] }}
+                    transition={{ repeat: Infinity, duration: 3 }}
+                    className="absolute -inset-3 rounded-3xl border border-amber-700/10"
+                  />
+                </motion.div>
+
+                <h2 className="text-3xl font-display text-amber-100/80 mb-0.5 tracking-tight">Earth Fell Silent</h2>
+                <p className="text-amber-200/25 font-body text-xs mb-5">The forests wither, but the roots remain. Rise again, Keeper.</p>
 
                 <div className="w-full grid grid-cols-4 gap-2 mb-4">
                   {[
                     { label: "Score", value: score, color: "text-amber-300" },
-                    { label: "Saved", value: collected, color: "text-emerald-300" },
+                    { label: "Saved", value: collected, color: "text-emerald-400/80" },
                     { label: "Purified", value: destroyed, color: "text-orange-300" },
                     { label: "Best Combo", value: `${maxCombo}x`, color: "text-amber-300" },
                   ].map(s => (
-                    <div key={s.label} className="px-2 py-2 bg-white/[0.03] rounded-lg border border-white/[0.04] text-center">
-                      <p className="text-white/20 text-[7px] tracking-[0.2em] uppercase font-display mb-0.5">{s.label}</p>
+                    <div key={s.label} className="px-2 py-2 rounded-lg border text-center"
+                      style={{
+                        background: 'rgba(60,40,15,0.3)',
+                        borderColor: 'rgba(140,100,40,0.1)'
+                      }}
+                    >
+                      <p className="text-amber-200/20 text-[7px] tracking-[0.2em] uppercase font-display mb-0.5">{s.label}</p>
                       <p className={`text-lg font-display tabular-nums ${s.color}`}>{s.value}</p>
                     </div>
                   ))}
                 </div>
 
-                <div className="flex items-center gap-1.5 mb-5 px-3 py-1.5 bg-white/[0.03] rounded-lg border border-white/[0.04]">
-                  <Star className="w-3 h-3 text-amber-400/60" />
-                  <span className="text-white/30 text-[9px] tracking-widest uppercase font-display">Level {level}</span>
-                  <span className="text-white/10">-</span>
-                  <span className="text-amber-300/80 font-display text-xs">{levelName}</span>
-                  <span className="text-white/10">-</span>
-                  <span className="text-white/30 text-[9px] tabular-nums font-display">{Math.floor(time)}s</span>
+                <div className="flex items-center gap-1.5 mb-5 px-3 py-1.5 rounded-lg border"
+                  style={{
+                    background: 'rgba(60,40,15,0.25)',
+                    borderColor: 'rgba(140,100,40,0.1)'
+                  }}
+                >
+                  <Star className="w-3 h-3 text-amber-500/50" />
+                  <span className="text-amber-200/25 text-[9px] tracking-widest uppercase font-display">Level {level}</span>
+                  <span className="text-amber-200/10">-</span>
+                  <span className="text-amber-300/70 font-display text-xs">{levelName}</span>
+                  <span className="text-amber-200/10">-</span>
+                  <span className="text-amber-200/25 text-[9px] tabular-nums font-display">{Math.floor(time)}s</span>
                 </div>
 
-                <p className="text-white/20 font-body text-[10px] italic mb-5">"Earth does not need a hero seeking glory. It needs a keeper who never stops."</p>
+                <div className="flex items-center gap-2 mb-5 px-4 py-2.5 rounded-xl border border-amber-700/15"
+                  style={{ background: 'rgba(60,40,15,0.2)' }}
+                >
+                  <Leaf className="w-4 h-4 text-amber-500/40" />
+                  <p className="text-amber-200/30 font-body text-xs italic leading-relaxed">
+                    "Earth does not need a hero seeking glory. It needs a keeper who never stops."
+                  </p>
+                </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={resetGame} className="px-5 rounded-lg bg-emerald-600/80 text-white font-display text-xs tracking-widest border border-emerald-500/30" data-testid="button-restart-game">
+                  <Button onClick={resetGame} className="px-5 rounded-lg bg-emerald-700/70 text-white font-display text-xs tracking-widest border border-emerald-600/40"
+                    data-testid="button-restart-game"
+                  >
                     <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                     TRY AGAIN
                   </Button>
-                  <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-white/50 font-display text-xs tracking-widest border border-white/[0.06]" data-testid="button-leave-game">
+                  <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-amber-200/40 font-display text-xs tracking-widest border border-amber-700/15" data-testid="button-leave-game">
                     <Home className="w-3.5 h-3.5 mr-1.5" />
                     EXIT
                   </Button>
@@ -1241,17 +1358,78 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="absolute inset-0 z-30 flex flex-col items-center justify-center p-4 text-center"
+              className="absolute inset-0 z-30 flex flex-col items-center justify-center p-4 text-center overflow-hidden"
               style={{
-                background: 'radial-gradient(ellipse at 50% 30%, rgba(6,78,59,0.5) 0%, rgba(0,0,0,0.85) 100%)',
+                background: 'radial-gradient(ellipse at 50% 100%, rgba(6,78,59,0.6) 0%, rgba(6,50,35,0.5) 30%, rgba(0,20,15,0.85) 70%, rgba(0,0,0,0.95) 100%)',
                 backdropFilter: 'blur(16px)'
               }}
             >
+              {/* Lush nature celebration background */}
+              <div className="absolute inset-0 pointer-events-none">
+                {/* Green aurora glow at top */}
+                <div className="absolute top-0 left-0 right-0 h-[40%]" style={{
+                  background: 'radial-gradient(ellipse at 50% 0%, rgba(74,222,128,0.08) 0%, rgba(34,197,94,0.04) 40%, transparent 70%)'
+                }} />
+                {/* Sunlight beam from top-center */}
+                <div className="absolute top-0 left-[40%] w-[20%] h-[60%]" style={{
+                  background: 'linear-gradient(180deg, rgba(250,240,180,0.04) 0%, transparent 100%)',
+                  filter: 'blur(20px)'
+                }} />
+                {/* Ground greenery glow */}
+                <div className="absolute bottom-0 left-0 right-0 h-[25%]" style={{
+                  background: 'radial-gradient(ellipse at 50% 100%, rgba(34,197,94,0.08) 0%, transparent 60%)'
+                }} />
+                {/* Treeline silhouette at bottom */}
+                <svg viewBox="0 0 1200 200" className="absolute bottom-0 left-0 right-0 w-full opacity-[0.08]" preserveAspectRatio="none">
+                  <path d="M0,200 L0,120 L30,115 L50,70 L70,115 L100,110 L120,55 L140,110 L170,105 L195,40 L220,105 L250,110 L275,60 L300,110 L330,115 L355,75 L380,115 L410,110 L440,50 L470,110 L500,115 L525,65 L550,115 L580,110 L610,45 L640,110 L670,115 L695,70 L720,115 L750,108 L780,55 L810,110 L840,115 L865,60 L890,115 L920,110 L950,42 L980,110 L1010,115 L1035,68 L1060,115 L1090,108 L1120,50 L1150,110 L1180,115 L1200,100 L1200,200 Z"
+                    fill="rgba(34,120,80,0.6)"
+                  />
+                </svg>
+              </div>
+
+              {/* Rising nature particles - leaves, sparkles, pollen */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                {[...Array(25)].map((_, i) => {
+                  const isLeaf = i % 5 === 0;
+                  return (
+                    <motion.div
+                      key={`vp-${i}`}
+                      initial={{ opacity: 0, y: 200 + (i % 8) * 40 }}
+                      animate={{
+                        opacity: [0, isLeaf ? 0.5 : 0.7, 0],
+                        y: [200 + (i % 8) * 40, -(100 + (i % 6) * 40)],
+                        x: [(i % 2 === 0 ? -1 : 1) * (i % 5) * 15, (i % 2 === 0 ? 1 : -1) * (i % 4) * 25],
+                        rotate: isLeaf ? [0, 360] : [0, 0],
+                      }}
+                      transition={{
+                        duration: 5 + (i % 5) * 1.5,
+                        repeat: Infinity,
+                        delay: i * 0.35,
+                        ease: "easeOut",
+                      }}
+                      className="absolute"
+                      style={{ left: `${3 + (i * 3.7) % 94}%` }}
+                    >
+                      {isLeaf ? (
+                        <Leaf className="w-3 h-3 text-emerald-400/40" />
+                      ) : (
+                        <div className="rounded-full" style={{
+                          width: `${2 + (i % 3)}px`,
+                          height: `${2 + (i % 3)}px`,
+                          backgroundColor: i % 4 === 0 ? 'rgba(74,222,128,0.6)' : i % 4 === 1 ? 'rgba(250,204,21,0.5)' : i % 4 === 2 ? 'rgba(147,197,253,0.4)' : 'rgba(167,243,208,0.5)',
+                          boxShadow: `0 0 6px ${i % 4 === 0 ? 'rgba(74,222,128,0.3)' : i % 4 === 1 ? 'rgba(250,204,21,0.2)' : 'rgba(147,197,253,0.2)'}`,
+                        }} />
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
+
               <motion.div
                 initial={{ scale: 0.7, y: 30 }}
                 animate={{ scale: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 180, damping: 18, delay: 0.2 }}
-                className="flex flex-col items-center max-w-md w-full"
+                className="flex flex-col items-center max-w-md w-full relative z-10"
               >
                 <motion.div
                   initial={{ scale: 0, rotate: -30 }}
@@ -1280,7 +1458,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
                   transition={{ delay: 0.6 }}
                 >
                   <p className="text-[10px] tracking-[0.5em] uppercase font-display text-emerald-400/50 mb-2">Congratulations</p>
-                  <h2 className="text-3xl md:text-4xl font-display text-white/95 mb-1 tracking-tight">Earth is Saved</h2>
+                  <h2 className="text-3xl md:text-4xl font-display text-emerald-50/95 mb-1 tracking-tight">Earth is Saved</h2>
                   <p className="text-emerald-300/50 font-body text-sm mb-6">The skies are clear. Nature breathes again, thanks to you, Keeper.</p>
                 </motion.div>
 
@@ -1296,8 +1474,13 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
                     { label: "Purified", value: destroyed, color: "text-orange-300" },
                     { label: "Best Combo", value: `${maxCombo}x`, color: "text-amber-300" },
                   ].map(s => (
-                    <div key={s.label} className="px-2 py-2 bg-white/[0.03] rounded-lg border border-white/[0.04] text-center">
-                      <p className="text-white/20 text-[7px] tracking-[0.2em] uppercase font-display mb-0.5">{s.label}</p>
+                    <div key={s.label} className="px-2 py-2 rounded-lg border text-center"
+                      style={{
+                        background: 'rgba(6,60,40,0.35)',
+                        borderColor: 'rgba(74,222,128,0.1)'
+                      }}
+                    >
+                      <p className="text-emerald-200/25 text-[7px] tracking-[0.2em] uppercase font-display mb-0.5">{s.label}</p>
                       <p className={`text-lg font-display tabular-nums ${s.color}`}>{s.value}</p>
                     </div>
                   ))}
@@ -1307,13 +1490,17 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.0 }}
-                  className="flex items-center gap-1.5 mb-4 px-3 py-1.5 bg-white/[0.03] rounded-lg border border-white/[0.04]"
+                  className="flex items-center gap-1.5 mb-4 px-3 py-1.5 rounded-lg border"
+                  style={{
+                    background: 'rgba(6,60,40,0.3)',
+                    borderColor: 'rgba(74,222,128,0.08)'
+                  }}
                 >
                   <Star className="w-3 h-3 text-amber-400/60" />
-                  <span className="text-white/30 text-[9px] tracking-widest uppercase font-display">Level {level}</span>
-                  <span className="text-white/10">-</span>
+                  <span className="text-emerald-200/30 text-[9px] tracking-widest uppercase font-display">Level {level}</span>
+                  <span className="text-emerald-200/10">-</span>
                   <span className="text-amber-300/80 font-display text-xs">{levelName}</span>
-                  <span className="text-white/10">-</span>
+                  <span className="text-emerald-200/10">-</span>
                   <DiffIcon className={`w-3 h-3 ${diffConfig.color}`} />
                   <span className={`text-[9px] font-display ${diffConfig.color}`}>{diffConfig.label}</span>
                 </motion.div>
@@ -1322,10 +1509,11 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.1 }}
-                  className="flex items-center gap-2 mb-5 px-4 py-2.5 bg-emerald-500/[0.06] rounded-xl border border-emerald-400/15"
+                  className="flex items-center gap-2 mb-5 px-4 py-2.5 rounded-xl border border-emerald-500/15"
+                  style={{ background: 'rgba(6,60,40,0.25)' }}
                 >
                   <TreeDeciduous className="w-4 h-4 text-emerald-400/70" />
-                  <p className="text-emerald-300/70 font-body text-xs italic leading-relaxed">
+                  <p className="text-emerald-300/60 font-body text-xs italic leading-relaxed">
                     "A true keeper does not fight for victory. They fight so every leaf, every river, every breath of wind may live on."
                   </p>
                 </motion.div>
@@ -1336,45 +1524,18 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
                   transition={{ delay: 1.3 }}
                   className="flex gap-2"
                 >
-                  <Button onClick={() => setShowQuiz(true)} className="px-5 rounded-lg bg-purple-600/70 text-white font-display text-xs tracking-widest border border-purple-500/30" data-testid="button-face-malakar">
+                  <Button onClick={() => setShowQuiz(true)} className="px-5 rounded-lg bg-purple-700/60 text-white font-display text-xs tracking-widest border border-purple-500/30"
+                    data-testid="button-face-malakar"
+                  >
                     <Skull className="w-3.5 h-3.5 mr-1.5" />
                     FACE MALAKAR
                   </Button>
-                  <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-white/50 font-display text-xs tracking-widest border border-white/[0.06]" data-testid="button-victory-exit">
+                  <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-emerald-200/40 font-display text-xs tracking-widest border border-emerald-500/10" data-testid="button-victory-exit">
                     <Home className="w-3.5 h-3.5 mr-1.5" />
                     EXIT
                   </Button>
                 </motion.div>
               </motion.div>
-
-              {/* Victory particles */}
-              <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                {[...Array(20)].map((_, i) => (
-                  <motion.div
-                    key={`victory-${i}`}
-                    initial={{ opacity: 0, y: 200 + Math.random() * 300 }}
-                    animate={{
-                      opacity: [0, 0.6, 0],
-                      y: [200 + Math.random() * 200, -(100 + Math.random() * 200)],
-                      x: [(Math.random() - 0.5) * 100, (Math.random() - 0.5) * 200],
-                    }}
-                    transition={{
-                      duration: 4 + Math.random() * 3,
-                      repeat: Infinity,
-                      delay: i * 0.3,
-                      ease: "easeOut",
-                    }}
-                    className="absolute rounded-full"
-                    style={{
-                      left: `${Math.random() * 100}%`,
-                      width: `${2 + Math.random() * 3}px`,
-                      height: `${2 + Math.random() * 3}px`,
-                      backgroundColor: i % 3 === 0 ? 'rgba(74,222,128,0.5)' : i % 3 === 1 ? 'rgba(250,204,21,0.4)' : 'rgba(147,197,253,0.3)',
-                      boxShadow: `0 0 6px ${i % 3 === 0 ? 'rgba(74,222,128,0.3)' : i % 3 === 1 ? 'rgba(250,204,21,0.2)' : 'rgba(147,197,253,0.2)'}`,
-                    }}
-                  />
-                ))}
-              </div>
             </motion.div>
           )}
         </AnimatePresence>
