@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 export function BackgroundEffects() {
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div className="background-effects fixed inset-0 pointer-events-none z-0 overflow-hidden">
       {/* Deep overlay vignette */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.6)_100%)] z-10" />
       
