@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, Star, Wind, Flame, Heart, Globe, RotateCcw, Home, Crown, TreeDeciduous } from "lucide-react";
+import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, Star, Wind, Flame, Heart, Globe, RotateCcw, Home, Crown, TreeDeciduous, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Skull } from "lucide-react";
 import { MalakarQuiz } from "./MalakarQuiz";
+import { GameSounds, startAmbient, stopAmbient, speakVillain, stopVillainSpeech } from "@/lib/sounds";
 import type { Difficulty } from "./DifficultySelect";
 
 interface GameObject {
@@ -90,6 +91,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
   const [pollution, setPollution] = useState<GameObject[]>([]);
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
   const [powerUps, setPowerUps] = useState<PowerUp[]>([]);
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
   const [activePowerUp, setActivePowerUp] = useState<string | null>(null);
   const [powerUpTimer, setPowerUpTimer] = useState(0);
@@ -127,6 +129,8 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
   const particleIdRef = useRef(0);
   const scoreSavedRef = useRef(false);
   const timeRef = useRef(0);
+  const soundRef = useRef(true);
+  const lastShotSoundRef = useRef(0);
 
   const PLAYER_Y = 85;
   const SHOT_SPEED = 2;
@@ -147,6 +151,13 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
   comboRef.current = combo;
   pausedRef.current = paused;
   timeRef.current = time;
+  soundRef.current = soundEnabled;
+
+  useEffect(() => {
+    if (soundEnabled) startAmbient();
+    else stopAmbient();
+    return () => { stopAmbient(); stopVillainSpeech(); };
+  }, [soundEnabled]);
 
   useEffect(() => {
     if ((gameOver || gameWon) && !scoreSavedRef.current && onSaveScore) {
@@ -161,6 +172,14 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
         destroyed,
         time,
       });
+    }
+    if (gameOver && soundEnabled) {
+      stopAmbient();
+      GameSounds.gameOver();
+    }
+    if (gameWon && soundEnabled) {
+      stopAmbient();
+      GameSounds.victory();
     }
   }, [gameOver, gameWon]);
 
@@ -185,18 +204,23 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
     setCombo(c => {
       const newCombo = c + 1;
       setMaxCombo(m => Math.max(m, newCombo));
-      if (newCombo === 10) {
+      if (newCombo === 5 && soundRef.current) {
+        GameSounds.combo5();
+      } else if (newCombo === 10) {
         setScore(s => s + 50);
         setHealth(h => Math.min(100, h + 5));
         addPopup(50, 40, "STREAK x10! +50", "text-amber-200");
+        if (soundRef.current) GameSounds.combo10();
       } else if (newCombo === 20) {
         setScore(s => s + 150);
         setHealth(h => Math.min(100, h + 10));
         addPopup(50, 40, "STREAK x20! +150", "text-amber-100");
+        if (soundRef.current) GameSounds.combo20();
       } else if (newCombo === 30) {
         setScore(s => s + 300);
         setHealth(h => Math.min(100, h + 15));
         addPopup(50, 40, "UNSTOPPABLE! +300", "text-yellow-200");
+        if (soundRef.current) GameSounds.combo30();
       }
       return newCombo;
     });
@@ -281,6 +305,10 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
       if (timestamp - lastShotRef.current > shotCooldown) {
         setProjectiles(prev => [...prev, { id: Date.now() + Math.random(), x: playerPosRef.current, y: PLAYER_Y }]);
         lastShotRef.current = timestamp;
+        if (soundRef.current && timestamp - lastShotSoundRef.current > 250) {
+          GameSounds.shoot();
+          lastShotSoundRef.current = timestamp;
+        }
       }
 
       const currentLevel = levelRef.current;
@@ -343,16 +371,19 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
               incrementCombo();
               addPopup(effectiveX, CONTAINER_Y - 5, `+${pts}`, "text-emerald-300");
               addHitParticle(effectiveX, CONTAINER_Y - 3, "bg-emerald-400");
+              if (soundRef.current) GameSounds.collectGarbage();
             } else {
               if (activePowerUpRef.current !== "shield") {
                 const dmg = Math.round((p.isToxic ? 18 : 8) * dc.damageMult);
                 hDelta -= dmg;
                 triggerShake();
+                if (soundRef.current) GameSounds.playerDamage();
               }
               if (nearMiss) {
                 const nearPts = 5 * getComboMultiplier();
                 setScore(s => s + nearPts);
                 addPopup(effectiveX, CONTAINER_Y - 8, `CLOSE! +${nearPts}`, "text-yellow-300");
+                if (soundRef.current) GameSounds.nearMiss();
               }
               setCombo(0);
             }
@@ -395,6 +426,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
               incrementCombo();
               addPopup(hitPol.x, hitPol.y, `+${pts}`, "text-amber-300");
               addHitParticle(hitPol.x, hitPol.y, "bg-amber-400");
+              if (soundRef.current) GameSounds.destroyGarbage();
               nextPol.splice(hitIdx, 1);
             }
           }
@@ -412,12 +444,14 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
             setHealth(h => Math.min(100, h + 12));
             setShowSeedBurst(true);
             addPopup(50, 50, "+100 SEED BURST", "text-emerald-300");
+            if (soundRef.current) GameSounds.seedBurst();
             setTimeout(() => setShowSeedBurst(false), 1000);
           } else {
             setActivePowerUp(found.type);
             activePowerUpRef.current = found.type;
             setPowerUpTimer(10);
             addPopup(found.x, found.y, found.type.toUpperCase(), "text-amber-300");
+            if (soundRef.current) GameSounds.powerUp();
           }
           return prev.filter(p => p.id !== found.id);
         }
@@ -436,6 +470,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
         setLevel(newLevel);
         levelRef.current = newLevel;
         setShowLevelUp(true);
+        if (soundRef.current) GameSounds.levelUp();
         setTimeout(() => setShowLevelUp(false), 2500);
       }
 
@@ -680,6 +715,9 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
 
             {/* Controls */}
             <div className="flex items-center gap-0.5">
+              <Button variant="ghost" size="icon" onClick={() => setSoundEnabled(s => !s)} className="rounded-lg bg-black/30 border border-white/[0.06]" data-testid="button-toggle-sound">
+                {soundEnabled ? <Volume2 className="w-4 h-4 text-white/60" /> : <VolumeX className="w-4 h-4 text-white/30" />}
+              </Button>
               <Button variant="ghost" size="icon" onClick={() => { keysRef.current.clear(); setPaused(p => !p); }} className="rounded-lg bg-black/30 border border-white/[0.06]" data-testid="button-pause-game">
                 {paused ? <Play className="w-4 h-4 text-white/60" /> : <Pause className="w-4 h-4 text-white/60" />}
               </Button>
