@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Leaf, Sparkles, Trophy, X, Shield, Zap, Clock, TreePine, Mountain, Flower2, FlaskRound, ShoppingBag, Package, Trash2, Droplets, Cpu, Pause, Play, ChevronUp, Star, Wind, Flame, Heart, Globe, RotateCcw, Home, Crown, TreeDeciduous } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Skull } from "lucide-react";
+import { MalakarQuiz } from "./MalakarQuiz";
 import type { Difficulty } from "./DifficultySelect";
 
 interface GameObject {
@@ -81,6 +83,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
   const [time, setTime] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
   const [paused, setPaused] = useState(false);
 
   const [playerPosition, setPlayerPosition] = useState(50);
@@ -469,6 +472,7 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
     setLevel(1);
     setGameOver(false);
     setGameWon(false);
+    setShowQuiz(false);
     setPaused(false);
     setPollution([]);
     setProjectiles([]);
@@ -1332,9 +1336,9 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
                   transition={{ delay: 1.3 }}
                   className="flex gap-2"
                 >
-                  <Button onClick={resetGame} className="px-5 rounded-lg bg-emerald-600/80 text-white font-display text-xs tracking-widest border border-emerald-500/30" data-testid="button-play-again">
-                    <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-                    PLAY AGAIN
+                  <Button onClick={() => setShowQuiz(true)} className="px-5 rounded-lg bg-purple-600/70 text-white font-display text-xs tracking-widest border border-purple-500/30" data-testid="button-face-malakar">
+                    <Skull className="w-3.5 h-3.5 mr-1.5" />
+                    FACE MALAKAR
                   </Button>
                   <Button variant="ghost" onClick={onExit} className="px-5 rounded-lg text-white/50 font-display text-xs tracking-widest border border-white/[0.06]" data-testid="button-victory-exit">
                     <Home className="w-3.5 h-3.5 mr-1.5" />
@@ -1375,6 +1379,17 @@ export function Game({ onExit, nickname, difficulty, onSaveScore }: GameProps) {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Malakar Quiz Overlay */}
+      <AnimatePresence>
+        {showQuiz && (
+          <MalakarQuiz
+            onPass={() => { setShowQuiz(false); onExit(); }}
+            onPlayAgain={() => { setShowQuiz(false); resetGame(); }}
+            onExit={() => { setShowQuiz(false); onExit(); }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Bottom hints */}
       <div className="mt-3 flex items-center gap-4 text-white/15 font-display text-[8px] tracking-[0.3em] uppercase flex-wrap justify-center">
