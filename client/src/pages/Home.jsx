@@ -168,7 +168,7 @@ export default function Home() {
       </motion.div>
 
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#020a04]/80 via-transparent to-[#020a04]/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#020a04]/50 via-transparent to-transparent" />
       </div>
     </div>
   );
