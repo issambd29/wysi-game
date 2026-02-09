@@ -76,6 +76,7 @@ Preferred communication style: Simple, everyday language.
 ### Key NPM Packages
 - `firebase` — Firebase SDK for Realtime Database access
 - `framer-motion` — Animation library for immersive UI effects
+- `three` / `@react-three/fiber` / `@react-three/drei` — Three.js 3D WebGL scene for immersive background (fireflies, particles, terrain, energy orbs, vine spirals, stars). Gracefully degrades if WebGL unavailable.
 - `wouter` — Lightweight client-side routing
 - `@tanstack/react-query` — Server state management and caching
 - `nanoid` — Generates unique player IDs
