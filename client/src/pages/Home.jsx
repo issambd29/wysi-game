@@ -167,13 +167,8 @@ export default function Home() {
         </motion.div>
       </motion.div>
 
-      <div className="fixed inset-0 z-0 opacity-40">
-        <img 
-          src="https://images.unsplash.com/photo-1511497584788-876760111969?q=80&w=2832&auto=format&fit=crop"
-          alt="Mystical Forest"
-          className="w-full h-full object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#020a04]/80 via-transparent to-[#020a04]/40" />
       </div>
     </div>
   );
