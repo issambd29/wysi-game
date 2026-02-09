@@ -812,18 +812,18 @@ export function ThreeBackground() {
           dpr={isMobile ? 1 : Math.min(window.devicePixelRatio, 1.5)}
           gl={{
             antialias: !isMobile,
-            alpha: false,
+            alpha: true,
             powerPreference: "default",
             stencil: false,
           }}
           onCreated={({ gl }) => {
-            gl.setClearColor(new THREE.Color(0.008, 0.03, 0.015), 1);
+            gl.setClearColor(new THREE.Color(0, 0, 0), 0);
             gl.toneMapping = THREE.ACESFilmicToneMapping;
-            gl.toneMappingExposure = 0.9;
+            gl.toneMappingExposure = 1.0;
             if (!gl.getContext()) setWebglSupported(false);
           }}
         >
-          <fog attach="fog" args={['#010a04', 6, 38]} />
+          <fog attach="fog" args={['#010a04', 10, 45]} />
 
           <MouseCamera />
           <SceneLighting isMobile={isMobile} />

@@ -10,11 +10,11 @@ function FallbackBackground() {
           src={forestBg}
           alt=""
           className="w-full h-full object-cover"
-          style={{ filter: "brightness(0.45) saturate(0.8)" }}
+          style={{ filter: "brightness(0.7) saturate(0.9)" }}
         />
       </div>
       <div className="absolute inset-0" style={{
-        background: 'radial-gradient(ellipse at 50% 30%, transparent 0%, rgba(2,10,4,0.6) 60%, rgba(0,0,0,0.85) 100%)',
+        background: 'radial-gradient(ellipse at 50% 40%, transparent 0%, rgba(2,10,4,0.3) 70%, rgba(0,0,0,0.5) 100%)',
       }} />
     </>
   );
