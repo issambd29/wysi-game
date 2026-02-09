@@ -86,6 +86,54 @@
   100% { transform: translateY(0px); }
 }
 
+/* 3D Navigation Bar */
+.nav-3d-bar {
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease-out;
+}
+.nav-3d-bar:hover {
+  transform: perspective(1200px) rotateX(2deg) translateY(-1px);
+}
+
+.nav-3d-item {
+  transform-style: preserve-3d;
+  transition: transform 0.2s ease-out;
+}
+.nav-3d-item:hover,
+.nav-3d-item:focus-visible {
+  transform: perspective(600px) translateZ(8px) scale(1.06);
+}
+.nav-3d-item:active {
+  transform: perspective(600px) translateZ(2px) scale(0.98);
+}
+
+.nav-3d-icon {
+  transform: translateZ(12px);
+  transform-style: preserve-3d;
+}
+
+.nav-3d-label {
+  transform: translateZ(8px);
+}
+
+.nav-3d-shine {
+  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%, rgba(255,255,255,0.01) 100%);
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+.nav-3d-item:hover .nav-3d-shine,
+.nav-3d-item:focus-visible .nav-3d-shine {
+  opacity: 1;
+}
+
+/* Mobile nav 3D press */
+.nav-3d-mobile-item {
+  transition: transform 0.15s ease-out;
+}
+.nav-3d-mobile-item:active {
+  transform: scale(0.92) translateY(1px);
+}
+
 body.game-active nav,
 body.game-active .background-effects {
   display: none !important;
